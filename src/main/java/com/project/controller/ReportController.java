@@ -22,7 +22,7 @@ import com.project.repository.UploadedFileDataRepository;
 import com.project.repository.UploadedFileRepository;
 import com.project.service.ExcelService;
 
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.http.HttpSession;
 @Controller
 public class ReportController {
 	 //time stamp
@@ -96,6 +96,7 @@ public class ReportController {
         Long fileId = Long.valueOf(fileIdObj.toString());
         int headerCount = payload.get("headerCount") != null ? Integer.parseInt(payload.get("headerCount").toString()) : 0;
         int trailerCount = payload.get("trailerCount") != null ? Integer.parseInt(payload.get("trailerCount").toString()) : 0;
+        int totalPayableColumn = payload.get("totalPayableColumn") != null ? Integer.parseInt(payload.get("totalPayableColumn").toString()) : 0;
         List<java.util.Map<String, Object>> columnData = (List<java.util.Map<String, Object>>) payload.get("columns");
         
         Long contractorId = getCurrentContractorId(session);
@@ -104,6 +105,7 @@ public class ReportController {
         
         file.setHeaderCount(headerCount);
         file.setTrailerCount(trailerCount);
+        file.setTotalPayableColumn(totalPayableColumn);
         fileRepo.save(file);
 
         columnRepo.deleteByFileId(fileId);
@@ -234,6 +236,7 @@ public class ReportController {
         model.addAttribute("fileId", fileId);
         model.addAttribute("headerCount", file.getHeaderCount() != null ? file.getHeaderCount() : 0);
         model.addAttribute("trailerCount", file.getTrailerCount() != null ? file.getTrailerCount() : 0);
+        model.addAttribute("totalPayableColumn", file.getTotalPayableColumn() != null ? file.getTotalPayableColumn() : 0);
         model.addAttribute("existingColumns", existingColumns);
         
         session.setAttribute("fileId", fileId);

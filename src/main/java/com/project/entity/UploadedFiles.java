@@ -2,11 +2,11 @@ package com.project.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 	@Table(name = "uploaded_files")
@@ -20,7 +20,8 @@ import jakarta.persistence.Table;
 	    private LocalDateTime uploadDate;
 	    private Integer headerCount;
 	    private Integer trailerCount;
-	    @jakarta.persistence.Column(name = "file_content")
+	    private Integer totalPayableColumn; // Index of total payable amount column
+	    @javax.persistence.Column(name = "file_content")
 	    private byte[] fileContent;
 	    private Long contractorId;
 	    
@@ -71,6 +72,12 @@ import jakarta.persistence.Table;
 		}
 		public void setFileContent(byte[] fileContent) {
 			this.fileContent = fileContent;
+		}
+		public Integer getTotalPayableColumn() {
+			return totalPayableColumn;
+		}
+		public void setTotalPayableColumn(Integer totalPayableColumn) {
+			this.totalPayableColumn = totalPayableColumn;
 		}
 	    
 	}

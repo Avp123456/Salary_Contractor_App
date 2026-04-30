@@ -1,36 +1,283 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Profile</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+    <meta charset="UTF-8">
+    <title>Contractor Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
 
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: #f1f5f9; 
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            max-width: 650px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header-section h2 {
+            font-weight: 700;
+            color: #1e1b4b;
+            letter-spacing: -0.02em;
+        }
+
+        .profile-card {
+            background: var(--glass-bg);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .card-top-accent {
+            height: 6px;
+            background: var(--primary-gradient);
+        }
+
+        .card-inner {
+            padding: 3rem;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0fdf4;
+            color: #166534;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group-custom {
+            margin-bottom: 1.8rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+
+        .form-control:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+            outline: none;
+        }
+
+        .form-control.readonly-mode {
+            background-color: #f8fafc;
+            border-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .form-control.editable-mode {
+            background-color: #fff;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .form-control.permanent-readonly {
+            background-color: #f1f5f9;
+            border-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn-edit-toggle {
+            background: #fff;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+            border-radius: 12px;
+            padding: 10px 24px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit-toggle:hover {
+            background: #f5f3ff;
+        }
+
+        .btn-save-profile {
+            background: var(--primary-gradient);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 32px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s ease;
+            display: none;
+        }
+
+        .btn-save-profile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+            color: #fff;
+        }
+
+        .empty-value-hint {
+            color: #ef4444;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .visible-btn {
+            display: block !important;
+            animation: slideIn 0.3s ease forwards;
+        }
+    </style>
+</head>
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="container mt-4">
-    <h3>Profile</h3>
+<div class="profile-container">
+    <div class="header-section">
+        <h2><i class="bi bi-person-badge-fill me-2" style="color: #4f46e5;"></i>Account Profile</h2>
+        <p class="text-muted">Manage your personal details and contact information</p>
+    </div>
 
-    <form>
-        <div class="mb-3">
-            <label>Name</label>
-            <input type="text" class="form-control" value="ABC Contractor">
+    <div class="profile-card">
+        <div class="card-top-accent"></div>
+        <div class="card-inner">
+            
+            <form th:action="@{/profile/update}" method="post" id="profileForm">
+                
+                <!-- FULL NAME -->
+                <div class="form-group-custom">
+                    <label class="form-label">
+                        <i class="bi bi-person-circle text-primary"></i> Full Name
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" name="name" id="nameInput" 
+                               class="form-control readonly-mode" 
+                               th:value="${user.name}" 
+                               required>
+                    </div>
+                </div>
+
+                <!-- EMAIL ADDRESS -->
+                <div class="form-group-custom">
+                    <label class="form-label">
+                        <i class="bi bi-envelope-at text-primary"></i> Email Address
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="email" class="form-control permanent-readonly" 
+                               th:value="${user.email}" readonly>
+                        <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Email cannot be changed</small>
+                    </div>
+                </div>
+
+                <!-- MOBILE NUMBER -->
+                <div class="form-group-custom">
+                    <label class="form-label">
+                        <i class="bi bi-phone-vibrate text-primary"></i> Mobile Number
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" name="mobile" id="mobileInput"
+                               class="form-control readonly-mode"
+                               th:value="${user.mobile}"
+                               placeholder="Enter 10-digit mobile number"
+                               pattern="[0-9]{10}" maxlength="10">
+                        
+                        <div th:if="${#strings.isEmpty(user.mobile)}" class="mt-2" id="emptyMobileHint">
+                             <span class="empty-value-hint"><i class="bi bi-exclamation-circle me-1"></i> Please add a mobile number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-action-group">
+                    <button type="button" class="btn-edit-toggle" id="editBtn">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Profile
+                    </button>
+                    <button type="button" class="btn btn-light border-2 text-muted px-4" id="cancelBtn" style="display: none; border-radius: 12px; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-save-profile" id="saveBtn">
+                        <i class="bi bi-check2-circle me-2"></i>Save Changes
+                    </button>
+                </div>
+
+            </form>
         </div>
-
-        <div class="mb-3">
-            <label>Email</label>
-            <input type="email" class="form-control" value="abc@gmail.com">
-        </div>
-
-        <div class="mb-3">
-            <label>Bank Account</label>
-            <input type="text" class="form-control" placeholder="Enter account details">
-        </div>
-
-        <button class="btn btn-success">Update</button>
-    </form>
+    </div>
 </div>
 
+<script>
+    const editBtn = document.getElementById('editBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const nameInput = document.getElementById('nameInput');
+    const mobileInput = document.getElementById('mobileInput');
+
+    editBtn.addEventListener('click', () => {
+        nameInput.classList.remove('readonly-mode');
+        nameInput.classList.add('editable-mode');
+        mobileInput.classList.remove('readonly-mode');
+        mobileInput.classList.add('editable-mode');
+        nameInput.focus();
+        editBtn.style.display = 'none';
+        cancelBtn.style.display = 'block';
+        saveBtn.classList.add('visible-btn');
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        window.location.reload();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

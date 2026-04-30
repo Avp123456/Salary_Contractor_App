@@ -54,21 +54,25 @@
             <!-- Header/Trailer Config -->
             <div class="config-row">
                 <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold text-muted">Header Rows to Skip</label>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold text-muted">Header Skip</label>
                         <input type="number" id="headerCount" class="form-control form-control-sm" 
-                               th:value="${headerCount}" 
-                               onfocus="if(this.value=='0')this.value=''" 
-                               onblur="if(this.value=='')this.value='0'" min="0">
+                                th:value="${headerCount}" min="0">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold text-muted">Trailer Rows to Skip</label>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold text-muted">Trailer Skip</label>
                         <input type="number" id="trailerCount" class="form-control form-control-sm" 
-                               th:value="${trailerCount}" 
-                               onfocus="if(this.value=='0')this.value=''" 
-                               onblur="if(this.value=='')this.value='0'" min="0">
+                                th:value="${trailerCount}" min="0">
                     </div>
-                    <div class="col-md-6 d-flex align-items-end justify-content-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted">Total Payable Amount Column Position</label>
+                        <input type="number" id="totalPayableColumn" class="form-control form-control-sm" 
+                                th:value="${totalPayableColumn}" 
+                                placeholder="Mandatory Excel Pos"
+                                oninput="this.classList.remove('is-invalid')"
+                                min="1" required>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end justify-content-end">
                         <button class="btn btn-outline-primary btn-sm mb-1 px-3" style="font-size: 0.75rem; border-style: dashed;" onclick="addRow()">+ Add Column</button>
                     </div>
                 </div>
@@ -145,6 +149,12 @@
             let isValid = true;
             document.getElementById('validationError').style.display = 'none';
 
+            const totalPayColInput = document.getElementById('totalPayableColumn');
+            if (!totalPayColInput.value || totalPayColInput.value <= 0) {
+                isValid = false;
+                totalPayColInput.classList.add('is-invalid');
+            }
+
             rows.forEach(r => {
                 const inputs = r.querySelectorAll('input, select');
                 const nameInput = inputs[0];
@@ -184,6 +194,7 @@
                 fileId: fileId,
                 headerCount: parseInt(document.getElementById('headerCount').value) || 0,
                 trailerCount: parseInt(document.getElementById('trailerCount').value) || 0,
+                totalPayableColumn: parseInt(document.getElementById('totalPayableColumn').value) || 0,
                 columns: data
             };
 

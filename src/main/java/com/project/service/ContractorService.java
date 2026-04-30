@@ -1,12 +1,9 @@
 package com.project.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.project.entity.Contractor;
-import com.project.entity.Employee;
 import com.project.repository.ContractorRepository;
 
 @Service
@@ -17,6 +14,15 @@ public class ContractorService {
 
     public Contractor login(String email, String password) {
         return repo.findByEmailAndPassword(email, password);
+    }
+
+    public Contractor findByEmail(String email) {
+        return repo.findByEmail(email);
+    }
+
+   
+    public Contractor save(Contractor contractor) {
+        return repo.save(contractor);
     }
     
 }

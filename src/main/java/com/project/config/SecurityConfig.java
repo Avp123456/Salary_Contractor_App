@@ -16,10 +16,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
+            .csrf().disable()
+            .authorizeRequests()
+                .antMatchers(
                         "/",
                         "/login",
                         "/logout",
@@ -27,11 +26,10 @@ public class SecurityConfig {
                         "/js/**",
                         "/images/**"
                 ).permitAll()
-                .anyRequest().permitAll() // 🔥 IMPORTANT (avoid 403)
-            )
-
-            .formLogin(form -> form.disable()) // ❌ disable spring login
-            .logout(logout -> logout.disable()); // ❌ disable spring logout
+                .anyRequest().permitAll()
+            .and()
+            .formLogin().disable()
+            .logout().disable();
 
         return http.build();
     }

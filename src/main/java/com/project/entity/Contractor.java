@@ -1,10 +1,10 @@
 package com.project.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "contractor")
@@ -17,6 +17,7 @@ public class Contractor {
     private String name;
     private String email;
     private String password;
+    private String mobile;
 
     public Contractor() {}   // ✅ VERY IMPORTANT (default constructor)
 
@@ -52,6 +53,14 @@ public class Contractor {
 		this.password = password;
 	}
 
-    // getters & setters
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
+	}
+
+   
     
 }

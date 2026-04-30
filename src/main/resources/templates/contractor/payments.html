@@ -184,12 +184,13 @@
                     const col = document.createElement('div');
                     col.className = 'col-md-6 salary-field';
                     col.innerHTML = `
-                        <label>${field.name}${isIdField ? ' <span style="font-size:0.65rem;color:#94a3b8;font-weight:400;">(locked)</span>' : ''}</label>
+                        <label>${field.name}</label>
                         <input type="text" 
                                value="${field.value}" 
                                data-actual="${field.actual}" 
                                data-type="${field.type}"
                                ${isIdField ? 'data-locked="true"' : ''}
+                               ${field.isTotal ? 'data-total="true" style="border: 1.5px solid #2563eb;"' : ''}
                                readonly>
                     `;
                     container.appendChild(col);
@@ -247,9 +248,12 @@
                         updates: updates
                     })
                 });                if (await response.text() === 'OK') {
-                    // Calculate new total based on the inputs (using the last input as the total amount)
+                    // Find the field marked as TOTAL to update the table
+                    const totalInput = document.querySelector('#salaryFieldsContainer input[data-total="true"]');
                     const lastInput = inputs[inputs.length - 1];
-                    const newTotal = parseFloat(lastInput.value.replace(/,/g, '')) || 0;
+                    const targetInput = totalInput || lastInput; // Fallback to last if no total marked
+                    
+                    const newTotal = parseFloat(targetInput.value.replace(/,/g, '')) || 0;
                     
                     // Update table UI
                     const row = document.getElementById(`row-${currentDataId}`);

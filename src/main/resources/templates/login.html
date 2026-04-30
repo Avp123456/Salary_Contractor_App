@@ -4,6 +4,7 @@
 <title>Login</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
 <style>
 
@@ -67,6 +68,20 @@ body {
 .form-control:focus {
   border-color: #39d98a;
   box-shadow: 0 0 0 0.15rem rgba(57,217,138,0.25);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #64748b;
+  z-index: 10;
 }
 
 /* ---------- BUTTON ---------- */
@@ -137,7 +152,12 @@ input[type="radio"]:checked + .role-card {
 
 <body>
 
-<!-- SUCCESS -->
+<!-- SUCCESS REGISTER -->
+<div class="toast-message toast-success" th:if="${param.registered}">
+  Registration successful! Please login.
+</div>
+
+<!-- SUCCESS LOGOUT -->
 <div class="toast-message toast-success" th:if="${param.logout}">
   Logged out successfully
 </div>
@@ -174,9 +194,19 @@ input[type="radio"]:checked + .role-card {
 
       <!-- INPUTS -->
       <input class="form-control mb-3" type="email" name="email" placeholder="Email" required>
-      <input class="form-control mb-3" type="password" name="password" placeholder="Password" required>
+      
+      <div class="password-wrapper mb-3">
+        <input class="form-control" type="password" id="password" name="password" placeholder="Password" required>
+        <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
+      </div>
 
       <button type="submit" class="btn btn-login w-100">Login</button>
+
+      <!-- REGISTER LINK -->
+      <div class="mt-4 text-center">
+        <span style="font-size: 14px; color: #64748b;">Don't have an account?</span>
+        <a th:href="@{/register}" style="color: #39d98a; font-weight: 600; text-decoration: none; margin-left: 5px;">Register</a>
+      </div>
 
     </form>
 
@@ -185,6 +215,16 @@ input[type="radio"]:checked + .role-card {
 </div>
 
 <script>
+/* 🔥 TOGGLE PASSWORD VISIBILITY */
+const togglePassword = document.querySelector('#togglePassword');
+const passwordField = document.querySelector('#password');
+
+togglePassword.addEventListener('click', function (e) {
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+    this.classList.toggle('bi-eye');
+    this.classList.toggle('bi-eye-slash');
+});
 
 /* 🔥 ROLE VALIDATION */
 document.getElementById("loginForm").addEventListener("submit", function(e) {
@@ -205,10 +245,6 @@ setTimeout(() => {
   }
 }, 3000);
 
-
-
-
-
 /* 🔥 TOGGLE RADIO (SELECT / UNSELECT) */
 const radios = document.querySelectorAll('input[name="role"]');
 
@@ -226,9 +262,6 @@ radios.forEach(radio => {
 
   });
 });
-
-
-
 </script>
 
 </body>

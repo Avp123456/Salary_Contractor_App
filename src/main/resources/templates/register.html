@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Register</title>
+<title>Register - Contractor</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
 <style>
+
+/* ---------- GLOBAL ---------- */
 body {
   margin: 0;
   height: 100vh;
@@ -17,54 +20,197 @@ body {
     linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
     url("https://t4.ftcdn.net/jpg/17/42/93/47/240_F_1742934729_zZy9JHoPHwI1G7xBOGUdAE47A9N6zarS.jpg");
   background-size: cover;
+  background-position: center;
 }
 
-.login-card {
+/* ---------- WRAPPER ---------- */
+.register-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- TITLE ---------- */
+.welcome-title {
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+/* ---------- CARD ---------- */
+.register-card {
   width: 420px;
   padding: 36px;
   border-radius: 14px;
   background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  animation: fadeUp 0.5s ease;
 }
 
-.btn-main {
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.register-card h3 {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+/* ---------- INPUT ---------- */
+.form-control {
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.form-control:focus {
+  border-color: #39d98a;
+  box-shadow: 0 0 0 0.15rem rgba(57,217,138,0.25);
+}
+
+.form-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #64748b;
+  z-index: 10;
+}
+
+/* ---------- BUTTON ---------- */
+.btn-register {
   background: #39d98a;
   border: none;
   font-weight: 600;
+  border-radius: 8px;
+  padding: 12px;
 }
+
+.btn-register:hover {
+  background: #2ecf7f;
+}
+
+/* ---------- ERROR ---------- */
+.error-msg {
+  color: #dc3545;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
+  display: block;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="login-card">
+<div class="register-wrapper">
 
-  <h3 class="text-center mb-4">Register</h3>
+  <div class="welcome-title">Join Us Today</div>
 
-  <form action="/register" method="post">
+  <div class="register-card">
+    <h3>Register</h3>
 
-    <input class="form-control mb-3" name="name" placeholder="Full Name" required>
-
-    <input class="form-control mb-3" type="email" name="email" placeholder="Email" required>
-
-    <input class="form-control mb-3" type="password" name="password" placeholder="Password" required>
+    <!-- ERROR MESSAGE FROM BACKEND -->
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
     
-    <select class="form-control mb-3" name="role" required>
-  <option value="">Select Role</option>
-  <option value="CONTRACTOR">Contractor</option>
-  <option value="EMPLOYEE">Employee</option>
-</select>
+    <!-- CLIENT SIDE ERROR -->
+    <div id="clientError" class="error-msg" style="display: none;"></div>
 
-    <button type="submit" class="btn btn-main w-100">Register</button>
+    <form id="registerForm" th:action="@{/register}" method="post">
 
-  </form>
+      <!-- FULL NAME -->
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-person text-primary"></i> Full Name</label>
+        <input class="form-control" type="text" name="name" placeholder="Enter your full name" required>
+      </div>
 
-  <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
+      <!-- EMAIL -->
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-envelope text-primary"></i> Email Address</label>
+        <input class="form-control" type="email" name="email" placeholder="Enter your email" required>
+      </div>
 
-  <p class="text-center mt-3">
-    Already have account? <a href="/">Login</a>
-  </p>
+      <!-- PASSWORD -->
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-lock text-primary"></i> Password</label>
+        <div class="password-wrapper">
+          <input class="form-control" type="password" id="password" name="password" placeholder="Create a password" required>
+          <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
+        </div>
+      </div>
+
+      <!-- CONFIRM PASSWORD -->
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-shield-lock text-primary"></i> Confirm Password</label>
+        <div class="password-wrapper">
+          <input class="form-control" type="password" id="confirmPassword" placeholder="Confirm your password" required>
+          <i class="bi bi-eye-slash password-toggle" id="toggleConfirmPassword"></i>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-register w-100 mt-2">Create Account</button>
+
+      <!-- LOGIN LINK -->
+      <div class="mt-4 text-center">
+        <span style="font-size: 14px; color: #64748b;">Already have an account?</span>
+        <a th:href="@{/login}" style="color: #39d98a; font-weight: 600; text-decoration: none; margin-left: 5px;">Login</a>
+      </div>
+
+    </form>
+
+  </div>
 
 </div>
+
+<script>
+/* 🔥 TOGGLE PASSWORD VISIBILITY */
+function setupPasswordToggle(toggleId, inputId) {
+    const toggle = document.querySelector(toggleId);
+    const input = document.querySelector(inputId);
+    toggle.addEventListener('click', function() {
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        this.classList.toggle('bi-eye');
+        this.classList.toggle('bi-eye-slash');
+    });
+}
+
+setupPasswordToggle('#togglePassword', '#password');
+setupPasswordToggle('#toggleConfirmPassword', '#confirmPassword');
+
+/* 🔥 PASSWORD MATCH VALIDATION */
+document.getElementById("registerForm").addEventListener("submit", function(e) {
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const errorDiv = document.getElementById("clientError");
+
+  if (password !== confirmPassword) {
+    e.preventDefault();
+    errorDiv.innerText = "Passwords do not match!";
+    errorDiv.style.display = "block";
+  } else {
+    errorDiv.style.display = "none";
+  }
+});
+</script>
 
 </body>
 </html>

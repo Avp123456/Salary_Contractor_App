@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Verify OTP - Contractor</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+<style>
+
+/* ---------- GLOBAL ---------- */
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    url("https://t4.ftcdn.net/jpg/17/42/93/47/240_F_1742934729_zZy9JHoPHwI1G7xBOGUdAE47A9N6zarS.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* ---------- WRAPPER ---------- */
+.verify-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- TITLE ---------- */
+.welcome-title {
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+/* ---------- CARD ---------- */
+.verify-card {
+  width: 420px;
+  padding: 36px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  animation: fadeUp 0.5s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.verify-card h3 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.email-hint {
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+/* ---------- INPUT ---------- */
+.form-control {
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  font-size: 1.2rem;
+  letter-spacing: 5px;
+  font-weight: 600;
+}
+
+.form-control:focus {
+  border-color: #39d98a;
+  box-shadow: 0 0 0 0.15rem rgba(57,217,138,0.25);
+}
+
+/* ---------- BUTTON ---------- */
+.btn-verify {
+  background: #39d98a;
+  border: none;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.btn-verify:hover {
+  background: #2ecf7f;
+}
+
+/* ---------- ERROR ---------- */
+.error-msg {
+  color: #dc3545;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
+  display: block;
+}
+
+.resend-link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.resend-link:hover {
+    color: #4338ca;
+    text-decoration: underline;
+}
+
+.resent-msg {
+    color: #10b981;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="verify-wrapper">
+
+  <div class="welcome-title">Security Check</div>
+
+  <div class="verify-card">
+    <h3>Verify Email</h3>
+    <p class="email-hint">We've sent a 6-digit code to <br><strong th:text="${email}">user@example.com</strong></p>
+
+    <!-- ERROR MESSAGE -->
+    <div th:if="${error}" class="error-msg" th:text="${error}"></div>
+    
+    <!-- RESENT SUCCESS -->
+    <div th:if="${param.resent}" class="resent-msg">
+        <i class="bi bi-check-circle-fill"></i> New code has been sent!
+    </div>
+
+    <form th:action="@{/verify-otp}" method="post">
+
+      <div class="mb-4">
+        <input class="form-control" type="text" name="otp" placeholder="XXXXXX" maxlength="6" required autofocus>
+      </div>
+
+      <button type="submit" class="btn btn-verify w-100 mb-3">Verify Code</button>
+
+      <div class="text-center">
+        <span style="font-size: 14px; color: #64748b;">Didn't receive code?</span>
+        <a th:href="@{/resend-otp}" class="resend-link ms-1">Resend OTP</a>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+</body>
+</html>

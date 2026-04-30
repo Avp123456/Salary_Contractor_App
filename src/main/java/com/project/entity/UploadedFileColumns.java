@@ -2,11 +2,11 @@ package com.project.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 	@Entity
 	@Table(name = "uploaded_file_columns")
 	public class UploadedFileColumns {
@@ -28,7 +28,7 @@ import jakarta.persistence.Table;
 	    private String columnName;       // user given name
 	    private int columnPosition;      // excel index
 	    private String dataType;         // STRING / NUMBER
-	    @jakarta.persistence.Column(name = "actual_col_name")
+	    @javax.persistence.Column(name = "actual_col_name")
 	    private String actualColumn;     // str1 / num1
 	    private Boolean parse;           // include in parsing
 		public Long getId() {

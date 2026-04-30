@@ -6,6 +6,7 @@ import com.project.entity.Contractor;
 
 public interface ContractorRepository extends JpaRepository<Contractor, Long> {
 	    Contractor findByEmailAndPassword(String email, String password);
+	    Contractor findByEmail(String email);
 	}
 
 
