@@ -21,15 +21,15 @@
     </style>
 </head>
 <body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Files')}"></div>
 
     <div class="container">
         <div class="mb-4">
-            <button class="btn btn-light" style="font-size: 0.85rem;" onclick="history.back()">&larr; Back to Configuration</button>
+            <button class="btn btn-light" style="font-size: 0.85rem;" onclick="history.back()">&larr; Back</button>
         </div>
 
-        <div class="header-section">
-            <h2 class="fw-bold mb-0" style="color: #1e293b; letter-spacing: -0.025em;">Preview Processed Data</h2>
+        <div class="header-section" style="margin-bottom: 20px;">
+            <h2 class="fw-bold mb-0 text-start" style="color: #1e293b; letter-spacing: -0.025em;">Preview Processed Data</h2>
             <div class="btn-save-container">
                 <form action="/contractor/save-data" method="post">
                     <button type="submit" class="btn btn-save">Confirm & Save</button>

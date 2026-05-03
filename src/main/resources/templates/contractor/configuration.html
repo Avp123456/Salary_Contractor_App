@@ -21,18 +21,17 @@
     </style>
 </head>
 <body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Configuration')}"></div>
 
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold">Report Configurations</h2>
-            <button class="btn btn-primary btn-sm" onclick="showCreateModal()">+ Create New Configuration</button>
+        <div class="d-flex justify-content-end align-items-center mb-4">
+            <button class="btn btn-primary btn-sm" onclick="showCreateModal()">+ Add</button>
         </div>
 
         <!-- Configuration List -->
         <div class="card">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table" id="configTable">
                     <thead>
                         <tr>
                             <th>Configuration Name</th>
@@ -41,8 +40,8 @@
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr th:each="config : ${configurations}">
+                    <tbody id="configTableBody">
+                        <tr th:each="config : ${configurations}" class="config-row-item">
                             <td th:text="${config.configName}" class="fw-medium"></td>
                             <td th:text="${config.headerCount + ' / ' + config.trailerCount}"></td>
                             <td th:text="${config.totalPayableColumn}"></td>
@@ -51,11 +50,21 @@
                                 <button class="btn btn-outline-danger btn-sm px-3" th:onclick="'deleteConfig(' + ${config.id} + ')'">Delete</button>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(configurations)}">
+                        <tr th:if="${#lists.isEmpty(configurations)}" id="noConfigRow">
                             <td colspan="4" class="text-center py-4 text-muted">No saved configurations found.</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <!-- Pagination for Configurations -->
+            <div id="configPagination" class="d-flex justify-content-center mt-3 mb-2" th:if="${not #lists.isEmpty(configurations)}">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item"><button class="page-link" onclick="changeConfigPage(configCurrentPage - 1)" id="prevConfigBtn">Previous</button></li>
+                        <li class="page-item disabled"><span class="page-link" id="configPageInfo">1 / 1</span></li>
+                        <li class="page-item"><button class="page-link" onclick="changeConfigPage(configCurrentPage + 1)" id="nextConfigBtn">Next</button></li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -72,7 +81,7 @@
                     <input type="hidden" id="configId">
                     <div class="mb-3">
                         <label class="form-label">Configuration Name</label>
-                        <input type="text" id="configName" class="form-control" placeholder="e.g., Monthly Salary Format">
+                        <input type="text" id="configName" class="form-control">
                     </div>
 
                     <div class="config-row">
@@ -87,14 +96,14 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Total Payable Amount Col Pos</label>
-                                <input type="number" id="totalPayableColumn" class="form-control form-control-sm" placeholder="Mandatory Excel Pos">
+                                <input type="number" id="totalPayableColumn" class="form-control form-control-sm">
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold mb-0">Columns Mapping</h6>
-                        <button class="btn btn-outline-primary btn-sm" onclick="addColumnRow()">+ Add Column</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="addNewColumnRow()">+ Add Column</button>
                     </div>
 
                     <div class="table-responsive">
@@ -112,6 +121,16 @@
                             </tbody>
                         </table>
                     </div>
+                    <!-- Pagination for Column Mapping -->
+                    <div id="columnPagination" class="d-flex justify-content-center mt-2">
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item"><button class="page-link" onclick="changeColumnPage(columnCurrentPage - 1)" id="prevColBtn">Previous</button></li>
+                                <li class="page-item disabled"><span class="page-link" id="columnPageInfo">1 / 1</span></li>
+                                <li class="page-item"><button class="page-link" onclick="changeColumnPage(columnCurrentPage + 1)" id="nextColBtn">Next</button></li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -121,21 +140,60 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let modal;
+        let configCurrentPage = 1;
+        const configPageSize = 10;
+        let configRows = [];
+
+        let columnCurrentPage = 1;
+        const columnPageSize = 5;
+        let columnsData = []; // Array of {columnName, dataType, columnPosition}
+
         document.addEventListener('DOMContentLoaded', function() {
             modal = new bootstrap.Modal(document.getElementById('configModal'));
+            
+            // Initialize config list pagination
+            configRows = Array.from(document.querySelectorAll('.config-row-item'));
+            if (configRows.length > 0) {
+                renderConfigTable();
+            }
         });
 
+        // Config List Pagination
+        function renderConfigTable() {
+            const startIndex = (configCurrentPage - 1) * configPageSize;
+            const endIndex = startIndex + configPageSize;
+            const totalPages = Math.ceil(configRows.length / configPageSize) || 1;
+
+            configRows.forEach((row, idx) => {
+                row.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            document.getElementById('configPageInfo').innerText = `${configCurrentPage} / ${totalPages}`;
+            document.getElementById('prevConfigBtn').parentElement.classList.toggle('disabled', configCurrentPage === 1);
+            document.getElementById('nextConfigBtn').parentElement.classList.toggle('disabled', configCurrentPage === totalPages);
+        }
+
+        function changeConfigPage(page) {
+            const totalPages = Math.ceil(configRows.length / configPageSize) || 1;
+            if (page < 1 || page > totalPages) return;
+            configCurrentPage = page;
+            renderConfigTable();
+        }
+
+        // Column Mapping Logic
         function showCreateModal() {
             document.getElementById('configId').value = '';
             document.getElementById('configName').value = '';
             document.getElementById('headerCount').value = '0';
             document.getElementById('trailerCount').value = '0';
             document.getElementById('totalPayableColumn').value = '';
-            document.getElementById('columnBody').innerHTML = '';
+            columnsData = [];
+            columnCurrentPage = 1;
             document.querySelector('#configModal .modal-title').innerText = 'New Configuration';
-            addColumnRow();
+            addNewColumnRow();
             modal.show();
         }
 
@@ -151,71 +209,110 @@
                     document.getElementById('totalPayableColumn').value = data.totalPayableColumn;
                     document.querySelector('#configModal .modal-title').innerText = 'Edit Configuration';
                     
-                    const tbody = document.getElementById('columnBody');
-                    tbody.innerHTML = '';
-                    
-                    data.columns.forEach(col => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td><input type="text" class="form-control form-control-sm" value="${col.columnName}" placeholder="e.g., Name"></td>
-                            <td>
-                                <select class="form-select form-select-sm">
-                                    <option value="STRING" ${col.dataType === 'STRING' ? 'selected' : ''}>STRING</option>
-                                    <option value="NUMBER" ${col.dataType === 'NUMBER' ? 'selected' : ''}>NUMBER</option>
-                                </select>
-                            </td>
-                            <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}" placeholder="Pos"></td>
-                            <td class="text-center">
-                                <button class="btn btn-link text-danger btn-sm p-0" onclick="this.parentElement.parentElement.remove()">&times;</button>
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
+                    columnsData = data.columns.map(col => ({
+                        columnName: col.columnName,
+                        dataType: col.dataType,
+                        columnPosition: col.columnPosition
+                    }));
+                    columnCurrentPage = 1;
+                    renderColumnTable();
                     modal.show();
                 });
         }
 
-        function addColumnRow() {
+        function addNewColumnRow() {
+            // Save current page inputs first
+            saveCurrentPageData();
+            
+            // Add new empty column
+            columnsData.push({ columnName: '', dataType: 'STRING', columnPosition: '' });
+            
+            // Go to last page
+            columnCurrentPage = Math.ceil(columnsData.length / columnPageSize) || 1;
+            renderColumnTable();
+        }
+
+        function saveCurrentPageData() {
+            const rows = document.querySelectorAll('#columnBody tr');
+            const startIndex = (columnCurrentPage - 1) * columnPageSize;
+            
+            rows.forEach((row, idx) => {
+                const dataIdx = startIndex + idx;
+                if (dataIdx < columnsData.length) {
+                    const inputs = row.querySelectorAll('input, select');
+                    columnsData[dataIdx] = {
+                        columnName: inputs[0].value.trim(),
+                        dataType: inputs[1].value,
+                        columnPosition: inputs[2].value
+                    };
+                }
+            });
+        }
+
+        function renderColumnTable() {
             const tbody = document.getElementById('columnBody');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm" placeholder="e.g., Name"></td>
-                <td>
-                    <select class="form-select form-select-sm">
-                        <option value="STRING">STRING</option>
-                        <option value="NUMBER">NUMBER</option>
-                    </select>
-                </td>
-                <td><input type="number" class="form-control form-control-sm" placeholder="Pos"></td>
-                <td class="text-center">
-                    <button class="btn btn-link text-danger btn-sm p-0" onclick="this.parentElement.parentElement.remove()">&times;</button>
-                </td>
-            `;
-            tbody.appendChild(row);
+            tbody.innerHTML = '';
+            
+            const startIndex = (columnCurrentPage - 1) * columnPageSize;
+            const endIndex = startIndex + columnPageSize;
+            const pageData = columnsData.slice(startIndex, endIndex);
+
+            pageData.forEach((col, idx) => {
+                const globalIdx = startIndex + idx;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="text" class="form-control form-control-sm" value="${col.columnName}"></td>
+                    <td>
+                        <select class="form-select form-select-sm">
+                            <option value="STRING" ${col.dataType === 'STRING' ? 'selected' : ''}>STRING</option>
+                            <option value="NUMBER" ${col.dataType === 'NUMBER' ? 'selected' : ''}>NUMBER</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}"></td>
+                    <td class="text-center">
+                        <button class="btn btn-link text-danger btn-sm p-0" onclick="removeColumn(${globalIdx})">&times;</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update Pagination UI
+            const totalPages = Math.ceil(columnsData.length / columnPageSize) || 1;
+            document.getElementById('columnPageInfo').innerText = `${columnCurrentPage} / ${totalPages}`;
+            document.getElementById('prevColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === 1);
+            document.getElementById('nextColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === totalPages);
+            document.getElementById('columnPagination').style.display = totalPages > 0 ? 'flex' : 'none';
+        }
+
+        function changeColumnPage(page) {
+            const totalPages = Math.ceil(columnsData.length / columnPageSize) || 1;
+            if (page < 1 || page > totalPages) return;
+            
+            saveCurrentPageData();
+            columnCurrentPage = page;
+            renderColumnTable();
+        }
+
+        function removeColumn(idx) {
+            columnsData.splice(idx, 1);
+            const totalPages = Math.ceil(columnsData.length / columnPageSize) || 1;
+            if (columnCurrentPage > totalPages) columnCurrentPage = totalPages;
+            renderColumnTable();
         }
 
         function saveConfiguration() {
+            saveCurrentPageData(); // Ensure last edits are captured
+            
             const id = document.getElementById('configId').value;
             const configName = document.getElementById('configName').value.trim();
             const totalPayableCol = document.getElementById('totalPayableColumn').value;
 
             if (!configName || !totalPayableCol) {
-                alert('Configuration name and Total Payable column are mandatory.');
+                Swal.fire('Error', 'Configuration name and Total Payable column are mandatory.', 'error');
                 return;
             }
 
-            const rows = document.querySelectorAll('#columnBody tr');
-            const columns = [];
-            rows.forEach(r => {
-                const inputs = r.querySelectorAll('input, select');
-                if (inputs[0].value.trim()) {
-                    columns.push({
-                        columnName: inputs[0].value.trim(),
-                        dataType: inputs[1].value,
-                        columnPosition: parseInt(inputs[2].value) || 0
-                    });
-                }
-            });
+            const validColumns = columnsData.filter(c => c.columnName.trim() !== '');
 
             const data = {
                 id: id ? parseInt(id) : null,
@@ -223,7 +320,11 @@
                 headerCount: parseInt(document.getElementById('headerCount').value) || 0,
                 trailerCount: parseInt(document.getElementById('trailerCount').value) || 0,
                 totalPayableColumn: parseInt(totalPayableCol),
-                columns: columns
+                columns: validColumns.map(c => ({
+                    columnName: c.columnName,
+                    dataType: c.dataType,
+                    columnPosition: parseInt(c.columnPosition) || 0
+                }))
             };
 
             fetch('/contractor/save-configuration', {
@@ -233,15 +334,35 @@
             })
             .then(res => res.text())
             .then(text => {
-                if (text === 'OK') window.location.reload();
-                else alert(text);
+                if (text === 'OK') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Configuration saved successfully.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+                else Swal.fire('Error', text, 'error');
             });
         }
 
         function deleteConfig(id) {
-            if (confirm('Are you sure you want to delete this configuration?')) {
-                window.location.href = '/contractor/delete-configuration/' + id;
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/contractor/delete-configuration/' + id;
+                }
+            });
         }
     </script>
 </body>

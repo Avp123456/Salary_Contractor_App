@@ -38,15 +38,12 @@
     </style>
 </head>
 <body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Files')}"></div>
 
     <div class="container">
-        <div class="mb-3">
-            <button class="btn btn-light" style="font-size: 0.85rem;" onclick="history.back()">&larr; Back to History</button>
-        </div>
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
             <div style="width: 200px;"></div> <!-- Spacer -->
-            <h2 class="fw-bold mb-0 text-dark mx-auto">Mapping Configuration</h2>
+            <h2 class="fw-bold mb-0 text-dark mx-auto"></h2> <!-- Removed Header -->
             <div style="width: 200px;" class="text-end">
                 <button class="btn btn-show" onclick="saveAndShow()">Show Preview &raquo;</button>
             </div>
@@ -83,7 +80,6 @@
                         <label class="form-label fw-bold text-muted">Total Payable Amount Column Position</label>
                         <input type="number" id="totalPayableColumn" class="form-control form-control-sm" 
                                  th:value="${totalPayableColumn}" 
-                                 placeholder="Mandatory Excel Pos"
                                  oninput="this.classList.remove('is-invalid')"
                                  min="1" required>
                     </div>
@@ -102,52 +98,112 @@
                         <th>Column Name</th>
                         <th style="width: 120px;">Data Type</th>
                         <th style="width: 150px;">Position (Excel)</th>
+                        <th style="width: 120px;" class="text-center">E/D</th>
                         <th style="width: 80px;" class="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody id="columnBody">
-                    <tr th:each="col : ${existingColumns}">
-                        <td><input type="text" class="form-control form-control-sm" th:value="${col.columnName}" placeholder="Column Name" oninput="this.classList.remove('is-invalid')" required></td>
+                    <tr th:each="col, stat : ${existingColumns}">
+                        <td><input type="text" class="form-control form-control-sm" th:value="${col.columnName}" oninput="this.classList.remove('is-invalid')" required></td>
                         <td>
-                            <select class="form-select form-select-sm" onchange="this.classList.remove('is-invalid')" required>
+                            <select class="form-select form-select-sm" onchange="toggleED(this)" required>
                                 <option value="STRING" th:selected="${col.dataType == 'STRING'}">STRING</option>
                                 <option value="NUMBER" th:selected="${col.dataType == 'NUMBER'}">NUMBER</option>
                             </select>
                         </td>
-                        <td><input type="number" class="form-control form-control-sm" th:value="${col.columnPosition}" placeholder="Pos" min="1" oninput="this.classList.remove('is-invalid')" required></td>
+                        <td><input type="number" class="form-control form-control-sm" th:value="${col.columnPosition}" min="1" oninput="this.classList.remove('is-invalid')" required></td>
                         <td class="text-center">
-                            <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="this.parentElement.parentElement.remove()">Delete</button>
+                            <div class="d-flex justify-content-center gap-2 ed-container" th:style="${col.dataType == 'NUMBER' ? '' : 'display:none'}">
+                                <div class="form-check form-check-inline m-0">
+                                    <input class="form-check-input" type="radio" th:name="'salaryType_' + ${stat.index}" value="E" th:checked="${col.salaryType == 'E'}">
+                                    <label class="form-check-label small">E</label>
+                                </div>
+                                <div class="form-check form-check-inline m-0">
+                                    <input class="form-check-input" type="radio" th:name="'salaryType_' + ${stat.index}" value="D" th:checked="${col.salaryType == 'D'}">
+                                    <label class="form-check-label small">D</label>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
             </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="small text-muted" id="paginationInfo">Showing 1 to 10 of 10</div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                        <!-- Dynamic -->
+                    </ul>
+                </nav>
+            </div>
         </div>
         
-        </div>
     </div>
 
     <script th:inline="javascript">
         /*[Hold fileId in JS]*/
         const fileId = [[${fileId}]];
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        function toggleED(select) {
+            select.classList.remove('is-invalid');
+            const row = select.closest('tr');
+            const container = row.querySelector('.ed-container');
+            if (select.value === 'NUMBER') {
+                container.style.display = 'flex';
+            } else {
+                container.style.display = 'none';
+                row.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            }
+        }
 
         function addRow() {
             const tbody = document.getElementById('columnBody');
+            const index = tbody.rows.length;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm" placeholder="Column Name" oninput="this.classList.remove('is-invalid')" required></td>
+                <td><input type="text" class="form-control form-control-sm" oninput="this.classList.remove('is-invalid')" required></td>
                 <td>
-                    <select class="form-select form-select-sm" onchange="this.classList.remove('is-invalid')" required>
+                    <select class="form-select form-select-sm" onchange="toggleED(this)" required>
                         <option value="STRING">STRING</option>
                         <option value="NUMBER">NUMBER</option>
                     </select>
                 </td>
-                <td><input type="number" class="form-control form-control-sm" placeholder="Pos" min="1" oninput="this.classList.remove('is-invalid')" required></td>
+                <td><input type="number" class="form-control form-control-sm" min="1" oninput="this.classList.remove('is-invalid')" required></td>
                 <td class="text-center">
-                    <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="this.parentElement.parentElement.remove()">Delete</button>
+                    <div class="d-flex justify-content-center gap-2 ed-container" style="display:none !important">
+                        <div class="form-check form-check-inline m-0">
+                            <input class="form-check-input" type="radio" name="salaryType_${index}" value="E">
+                            <label class="form-check-label small">E</label>
+                        </div>
+                        <div class="form-check form-check-inline m-0">
+                            <input class="form-check-input" type="radio" name="salaryType_${index}" value="D">
+                            <label class="form-check-label small">D</label>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
+            updatePagination();
+            goToPage(Math.ceil(tbody.rows.length / recordsPerPage));
+        }
+
+        function removeRow(btn) {
+            btn.parentElement.parentElement.remove();
+            updatePagination();
+            if (currentPage > Math.ceil(document.getElementById('columnBody').rows.length / recordsPerPage)) {
+                currentPage = Math.max(1, currentPage - 1);
+            }
+            applyPagination();
         }
 
         function loadConfiguration(id) {
@@ -163,30 +219,91 @@
                     const tbody = document.getElementById('columnBody');
                     tbody.innerHTML = ''; // Clear existing
                     
-                    data.columns.forEach(col => {
+                    data.columns.forEach((col, index) => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><input type="text" class="form-control form-control-sm" value="${col.columnName}" placeholder="Column Name" required></td>
+                            <td><input type="text" class="form-control form-control-sm" value="${col.columnName}" required></td>
                             <td>
-                                <select class="form-select form-select-sm" required>
+                                <select class="form-select form-select-sm" onchange="toggleED(this)" required>
                                     <option value="STRING" ${col.dataType === 'STRING' ? 'selected' : ''}>STRING</option>
                                     <option value="NUMBER" ${col.dataType === 'NUMBER' ? 'selected' : ''}>NUMBER</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}" placeholder="Pos" min="1" required></td>
+                            <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}" min="1" required></td>
                             <td class="text-center">
-                                <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="this.parentElement.parentElement.remove()">Delete</button>
+                                <div class="d-flex justify-content-center gap-2 ed-container" style="${col.dataType === 'NUMBER' ? '' : 'display:none !important'}">
+                                    <div class="form-check form-check-inline m-0">
+                                        <input class="form-check-input" type="radio" name="salaryType_${index}" value="E" ${col.salaryType === 'E' ? 'checked' : ''}>
+                                        <label class="form-check-label small">E</label>
+                                    </div>
+                                    <div class="form-check form-check-inline m-0">
+                                        <input class="form-check-input" type="radio" name="salaryType_${index}" value="D" ${col.salaryType === 'D' ? 'checked' : ''}>
+                                        <label class="form-check-label small">D</label>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
                             </td>
                         `;
                         tbody.appendChild(row);
                     });
+                    updatePagination();
+                    goToPage(1);
                 });
+        }
+
+        function updatePagination() {
+            const rows = document.getElementById('columnBody').rows;
+            const pageCount = Math.ceil(rows.length / recordsPerPage);
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            for (let i = 1; i <= pageCount; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>`;
+                controls.appendChild(li);
+            }
+            applyPagination();
+        }
+
+        function goToPage(p) {
+            currentPage = p;
+            applyPagination();
+            
+            const controls = document.getElementById('paginationControls').children;
+            for (let i = 0; i < controls.length; i++) {
+                controls[i].classList.remove('active');
+                if (i + 1 === currentPage) controls[i].classList.add('active');
+            }
+        }
+
+        function applyPagination() {
+            const rows = document.getElementById('columnBody').rows;
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = (i >= start && i < end) ? '' : 'none';
+            }
+
+            const info = document.getElementById('paginationInfo');
+            const total = rows.length;
+            if (total === 0) {
+                info.innerText = 'No records';
+            } else {
+                info.innerText = `Showing ${start + 1} to ${Math.min(end, total)} of ${total}`;
+            }
         }
 
         // Add initial row ONLY if no existing columns
         const existingCount = [[${existingColumns.size()}]];
         if (existingCount === 0) {
             addRow();
+        } else {
+            updatePagination();
+            applyPagination();
         }
 
         function saveAndShow() {
@@ -202,13 +319,15 @@
                 totalPayColInput.classList.add('is-invalid');
             }
 
-            rows.forEach(r => {
-                const inputs = r.querySelectorAll('input, select');
+            rows.forEach((r, idx) => {
+                const inputs = r.querySelectorAll('input:not([type="radio"]), select');
                 const nameInput = inputs[0];
+                const typeSelect = inputs[1];
                 const posInput = inputs[2];
                 
                 const name = nameInput.value.trim();
                 const pos = posInput.value.trim();
+                const type = typeSelect.value;
                 
                 // Reset states
                 nameInput.classList.remove('is-invalid');
@@ -223,17 +342,30 @@
                     posInput.classList.add('is-invalid');
                 }
 
+                let sType = null;
+                if (type === 'NUMBER') {
+                    const checkedRadio = r.querySelector('input[type="radio"]:checked');
+                    if (checkedRadio) sType = checkedRadio.value;
+                }
+
                 data.push({
                     columnName: name,
-                    dataType: inputs[1].value,
+                    dataType: type,
                     columnPosition: parseInt(pos) || 0,
+                    salaryType: sType,
                     parse: true
                 });
             });
 
             if (!isValid) {
                 document.getElementById('validationError').style.display = 'block';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Find first invalid page and go to it
+                for(let i=0; i<data.length; i++) {
+                    if(!data[i].columnName || !data[i].columnPosition) {
+                        goToPage(Math.floor(i / recordsPerPage) + 1);
+                        break;
+                    }
+                }
                 return;
             }
 

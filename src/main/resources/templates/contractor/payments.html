@@ -58,13 +58,9 @@
 </head>
 <body>
 
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Payments')}"></div>
 
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold mb-0" style="color: #1e293b; letter-spacing: -0.025em;">Payments Management</h2>
-        </div>
-
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -84,37 +80,11 @@
                             <td th:text="${p.name}"></td>
                             <td class="fw-bold amount-cell" th:text="'₹' + ${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}"></td>
                             <td class="text-center">
-                                <div class="dropdown d-inline-block me-1">
-                                    <button class="btn btn-sm status-dropdown dropdown-toggle" type="button" 
-                                            th:id="'dropdownMenuButton-' + ${p.id}" 
-                                            data-bs-toggle="dropdown" aria-expanded="false"
-                                            th:data-id="${p.id}"
-                                            th:data-status="${p.status}"
-                                            th:disabled="${p.payslipGenerated}"
-                                            style="width: 90px; font-size: 0.75rem; font-weight: 700; border-radius: 8px; padding: 6px; border: none; color: white;"
-                                            th:styleappend="${p.status == 'Paid' ? 'background-color: #10b981;' : 'background-color: #eab308;'}">
-                                        <span class="status-text" th:text="${p.status}">Status</span>
-                                    </button>
-                                    <ul class="dropdown-menu shadow" style="min-width: 110px; border-radius: 12px; padding: 6px; border: 1px solid #e2e8f0; z-index: 1060;" th:aria-labelledby="'dropdownMenuButton-' + ${p.id}">
-                                        <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0)" th:onclick="|updateCustomStatus(${p.id}, 'Pending')|" style="border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; font-weight: 500; margin-bottom: 2px;">Pending</a></li>
-                                        <li><a class="dropdown-item custom-dropdown-item" href="javascript:void(0)" th:onclick="|updateCustomStatus(${p.id}, 'Paid')|" style="border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; font-weight: 500;">Paid</a></li>
-                                    </ul>
-                                </div>
-
                                 <button class="btn btn-view btn-sm px-3" style="font-size: 13px;" th:onclick="'openSalaryModal(' + ${p.id} + ')'">View Structure</button>
                                 
-                                <button th:if="${!p.payslipGenerated}" 
-                                        class="btn btn-pay btn-sm px-3 ms-1" 
-                                        style="font-size: 13px;"
-                                        th:onclick="'generatePayslip(' + ${p.id} + ')'"
-                                        th:data-viewed="${p.structureViewed}"
-                                        th:id="'btn-payslip-' + ${p.id}">Generate Payslip</button>
-                                        
-                                <button th:if="${p.payslipGenerated}" 
-                                        class="btn btn-primary btn-sm px-3 ms-1" 
+                                <button class="btn btn-primary btn-sm px-3 ms-1" 
                                         style="background-color: #0f172a; border: none; font-size: 13px;"
-                                        th:onclick="'showPayslipOptions(' + ${p.id} + ')'"
-                                        th:id="'btn-payslip-' + ${p.id}">View Payslip</button>
+                                        th:onclick="'showPayslipOptions(' + ${p.id} + ')'">View Slip</button>
                             </td>
                         </tr>
                         <tr th:if="${payments == null || payments.empty}">
@@ -289,124 +259,18 @@
             }
         }
 
-        async function updateCustomStatus(id, newStatus) {
-            console.log(`[DEBUG] updateCustomStatus called for ID: ${id}, Status: ${newStatus}`);
-            const btn = document.getElementById('dropdownMenuButton-' + id);
-            if (!btn) {
-                console.error(`[ERROR] Button not found for ID: ${id}`);
-                return;
-            }
-            const oldStatus = btn.getAttribute('data-status');
-            
-            if (oldStatus === newStatus) {
-                console.log(`[DEBUG] Status is already ${newStatus}, skipping update.`);
-                return;
-            }
-
-            try {
-                console.log(`[DEBUG] Sending update request to server...`);
-                const response = await fetch('/contractor/update-payment-status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, status: newStatus })
-                });
-
-                const result = await response.text();
-                console.log(`[DEBUG] Server response: ${result}`);
-                
-                if (result.trim() === 'OK') {
-                    btn.querySelector('.status-text').innerText = newStatus;
-                    btn.setAttribute('data-status', newStatus);
-                    
-                    btn.style.color = 'white'; // Explicitly keep text white
-                    if (newStatus === 'Paid') {
-                        btn.style.backgroundColor = '#10b981';
-                    } else {
-                        btn.style.backgroundColor = '#eab308';
-                    }
-
-                    const Toast = Swal.mixin({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
                     });
-                    Toast.fire({
-                        icon: 'success',
-                        title: `Status updated to ${newStatus}`
-                    });
-                } else {
-                    throw new Error('Server returned: ' + result);
                 }
             } catch (err) {
-                console.error('Status update failed:', err);
-                Swal.fire({ 
-                    title: 'Update Failed', 
-                    text: 'Could not update payment status. Please try again.', 
-                    icon: 'error', 
-                    width: 300, 
-                    customClass: { popup: 'swal2-compact' } 
-                });
-            }
-        }
-
-        async function generatePayslip(id) {
-            const row = document.getElementById(`row-${id}`);
-            const btnDropdown = row.querySelector('.status-dropdown');
-            const status = btnDropdown.getAttribute('data-status');
-            const btn = document.getElementById(`btn-payslip-${id}`);
-            const structureViewed = btn.getAttribute('data-viewed') === 'true';
-
-            if (status !== 'Paid') {
                 Swal.fire({
-                    title: 'Cannot Generate',
-                    text: 'Salary is not paid yet. Please update the status to Paid first.',
-                    icon: 'warning',
-                    width: 300,
+                    title: 'Error',
+                    text: 'Failed to save changes.',
+                    icon: 'error',
+                    width: 250,
+                    padding: '16px',
                     customClass: { popup: 'swal2-compact' },
                     confirmButtonColor: '#2563eb'
                 });
-                return;
-            }
-
-            if (!structureViewed) {
-                Swal.fire({
-                    title: 'Action Required',
-                    text: 'You must view the salary structure at least once before generating a payslip.',
-                    icon: 'info',
-                    width: 300,
-                    customClass: { popup: 'swal2-compact' },
-                    confirmButtonColor: '#2563eb'
-                });
-                return;
-            }
-
-            try {
-                const response = await fetch('/contractor/generate-payslip', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id })
-                });
-
-                if (await response.text() === 'OK') {
-                    // Lock dropdown
-                    const btnDropdown = document.getElementById('dropdownMenuButton-' + id);
-                    if(btnDropdown) btnDropdown.disabled = true;
-                    
-                    // Update button UI to View Payslip
-                    btn.innerText = 'View Payslip';
-                    btn.classList.remove('btn-pay');
-                    btn.classList.add('btn-primary');
-                    btn.style.backgroundColor = '#0f172a';
-                    btn.style.border = 'none';
-                    btn.style.cursor = 'pointer';
-                    btn.onclick = () => showPayslipOptions(id);
-
-                    showPayslipOptions(id);
-                }
-            } catch (err) {
-                Swal.fire({ title: 'Error', text: 'Failed to generate payslip.', icon: 'error', width: 250, customClass: { popup: 'swal2-compact' } });
             }
         }
 

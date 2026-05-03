@@ -31,7 +31,7 @@ import java.nio.file.*;
 import java.io.IOException;
 import javax.servlet.http.HttpSession;
 @Controller
-public class ReportController {
+public class FilesController {
 	 //time stamp
     String time = java.time.LocalDateTime.now().toString();
     
@@ -117,15 +117,15 @@ public class ReportController {
         }
         System.out.println("[INFO] Reports Page Visited");
 
-        return "redirect:/contractor/reports";
+        return "redirect:/contractor/files";
     }
     
-    @GetMapping("/contractor/reports")
+    @GetMapping("/contractor/files")
     public String reports(Model model, HttpSession session) {
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("files", fileRepo.findByContractorId(contractorId));
-        System.out.println("[INFO] Reports Page Visited");
-        return "contractor/reports";
+        System.out.println("[INFO] Files Page Visited");
+        return "contractor/files";
     }
     
     @PostMapping("/contractor/save-columns-and-config")
@@ -162,6 +162,7 @@ public class ReportController {
             c.setDataType(colMap.get("dataType").toString());
             c.setColumnPosition(Integer.parseInt(colMap.get("columnPosition").toString()));
             c.setParse(Boolean.parseBoolean(colMap.get("parse").toString()));
+            c.setSalaryType(colMap.get("salaryType") != null ? colMap.get("salaryType").toString() : null);
             
             if (c.isParse() != null && c.isParse()) {
                 if ("STRING".equalsIgnoreCase(c.getDataType())) {
@@ -208,7 +209,7 @@ public class ReportController {
         
         if (data == null && fileId != null) {
             UploadedFiles file = fileRepo.findById(fileId).orElse(null);
-            if (file == null || !file.getContractorId().equals(contractorId)) return "redirect:/contractor/reports";
+            if (file == null || !file.getContractorId().equals(contractorId)) return "redirect:/contractor/files";
             List<List<String>> excelData = (List<List<String>>) session.getAttribute("excelData");
             if (excelData == null && file != null && file.getFilePath() != null) {
                 try {
@@ -262,7 +263,7 @@ public class ReportController {
             }
         }
 
-        if (data == null) return "redirect:/contractor/reports";
+        if (data == null) return "redirect:/contractor/files";
         for (List<String> row : data) {
             // Skip rows where ID is empty (usually these are 'Total' rows in Excel)
             if (idIdx != -1) {
@@ -287,8 +288,8 @@ public class ReportController {
             }
             dataRepo.save(d);
         }
-        System.out.println("[INFO] Reports Page Visited "+ time);
-        return "redirect:/contractor/reports";
+        System.out.println("[INFO] Data Saved for file: " + fileId);
+        return "redirect:/contractor/files?success=Data confirmed and saved successfully!";
     }
     
   
@@ -299,8 +300,8 @@ public class ReportController {
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
         
         if (file == null || !file.getContractorId().equals(contractorId)) {
-        	 System.out.println("[INFO] Reports Page Visited "+time);
-            return "redirect:/contractor/reports";
+        	 System.out.println("[INFO] Files Page Visited "+time);
+            return "redirect:/contractor/files";
         }
 
         List<UploadedFileColumns> existingColumns = columnRepo.findByFileIdAndContractorId(fileId, contractorId);
@@ -323,7 +324,7 @@ public class ReportController {
         Long fileId = (Long) session.getAttribute("fileId");
         Long contractorId = getCurrentContractorId(session);
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
-        if (file == null || !file.getContractorId().equals(contractorId)) return "redirect:/contractor/reports";
+        if (file == null || !file.getContractorId().equals(contractorId)) return "redirect:/contractor/files";
         
         List<List<String>> excelData = (List<List<String>>) session.getAttribute("excelData");
         
@@ -343,7 +344,7 @@ public class ReportController {
         
         if (excelData == null) {
 System.out.println("[INFO] Report Page Visited "+time);
-            return "redirect:/contractor/reports?error=Excel data not found. Please re-upload.";
+            return "redirect:/contractor/files?error=Excel data not found. Please re-upload.";
         }
         
         List<UploadedFileColumns> columns = columnRepo.findByFileId(fileId);
@@ -412,9 +413,9 @@ System.out.println("[INFO] Report Page Visited "+time);
             System.out.println("[INFO] File and data deleted from disk and DB. "+time);
 
         }
-        System.out.println("[INFO] Reports Page Visited "+time);
+        System.out.println("[INFO] Files Page Visited "+time);
 
-        return "redirect:/contractor/reports";
+        return "redirect:/contractor/files";
     }
 
     @GetMapping("/contractor/configurations")
@@ -459,6 +460,7 @@ System.out.println("[INFO] Report Page Visited "+time);
             col.setColumnName(colMap.get("columnName").toString());
             col.setDataType(colMap.get("dataType").toString());
             col.setColumnPosition(Integer.parseInt(colMap.get("columnPosition").toString()));
+            col.setSalaryType(colMap.get("salaryType") != null ? colMap.get("salaryType").toString() : null);
             configColRepo.save(col);
         }
 
@@ -477,7 +479,8 @@ System.out.println("[INFO] Report Page Visited "+time);
         res.put("headerCount", config.getHeaderCount());
         res.put("trailerCount", config.getTrailerCount());
         res.put("totalPayableColumn", config.getTotalPayableColumn());
-        res.put("columns", configColRepo.findByConfigId(id));
+        List<ReportConfigurationColumn> cols = configColRepo.findByConfigId(id);
+        res.put("columns", cols);
         return res;
     }
 

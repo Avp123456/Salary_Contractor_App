@@ -27,8 +27,8 @@
         .table th.sortable:hover { background-color: #bfdbfe; }
         
         .table td { 
-            padding: 12px 16px; 
-            font-size: 0.85rem; 
+            padding: 8px 12px; 
+            font-size: 0.75rem; 
             border-bottom: 1px solid #f1f5f9;
             max-width: 150px;
             white-space: nowrap;
@@ -114,17 +114,15 @@
 </head>
 <body>
 
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Salary')}"></div>
 
     <div class="container">
         <div class="header-section">
-            <h2 class="fw-bold mb-4" style="color: #1e293b; letter-spacing: -0.025em;">Salary Data</h2>
-            
             <div class="filter-section">
-                <form action="/contractor/show-salary-data" method="get" class="row g-3 align-items-end">
+                <form id="salaryForm" action="/contractor/show-salary-data" method="get" class="row g-3 align-items-end">
                     <div class="col-md-6">
                         <label class="form-label small fw-bold text-muted">Select Uploaded File</label>
-                        <select name="fileId" class="form-select" required>
+                        <select id="fileIdSelect" name="fileId" class="form-select" required>
                             <option value="" disabled th:selected="${selectedFileId == null}">Choose a file...</option>
                             <option th:each="f : ${files}" 
                                     th:value="${f.id}" 
@@ -133,7 +131,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-show w-100">Show Data</button>
+                        <button type="button" onclick="handleShowData()" class="btn btn-show w-100">Show Data</button>
                     </div>
                 </form>
             </div>
@@ -219,8 +217,23 @@
         let allData = [];
         let filteredData = [];
         let currentPage = 1;
-        const pageSize = 10;
+        const pageSize = 15;
         let currentSort = { col: -1, asc: true };
+        
+        const currentlyLoadedFileId = [[${selectedFileId}]];
+
+        function handleShowData() {
+            const selectedFileId = document.getElementById('fileIdSelect').value;
+            if (!selectedFileId) {
+                alert('Please select a file');
+                return;
+            }
+            if (selectedFileId == currentlyLoadedFileId) {
+                console.log('File already loaded, skipping refresh');
+                return;
+            }
+            document.getElementById('salaryForm').submit();
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const tableRows = document.querySelectorAll('.data-row');

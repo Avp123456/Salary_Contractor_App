@@ -14,6 +14,7 @@ public class Employee {
     private String email;
     private String password;
     private String empCode;
+    private String mobileNo;
     private Boolean passwordChanged = false;
 
     @ManyToOne
@@ -79,6 +80,14 @@ public class Employee {
 
     public void setEmpCode(String empCode) {
         this.empCode = empCode;
+    }
+
+    public String getMobileNo() {
+        return mobileNo;
+    }
+
+    public void setMobileNo(String mobileNo) {
+        this.mobileNo = mobileNo;
     }
 
     public Boolean getPasswordChanged() {

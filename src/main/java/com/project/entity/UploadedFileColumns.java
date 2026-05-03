@@ -31,6 +31,7 @@ import javax.persistence.Table;
 	    @javax.persistence.Column(name = "actual_col_name")
 	    private String actualColumn;     // str1 / num1
 	    private Boolean parse;           // include in parsing
+	    private String salaryType;       // E for Earnings, D for Deductions
 		public Long getId() {
 			return id;
 		}
@@ -72,6 +73,12 @@ import javax.persistence.Table;
 		}
 		public void setParse(Boolean parse) {
 			this.parse = parse;
+		}
+		public String getSalaryType() {
+			return salaryType;
+		}
+		public void setSalaryType(String salaryType) {
+			this.salaryType = salaryType;
 		}
 	    
 	    

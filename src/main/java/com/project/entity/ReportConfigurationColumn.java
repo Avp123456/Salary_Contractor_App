@@ -14,6 +14,7 @@ public class ReportConfigurationColumn {
     private String columnName;
     private Integer columnPosition;
     private String dataType;
+    private String salaryType;
 
     public Long getId() {
         return id;
@@ -53,5 +54,13 @@ public class ReportConfigurationColumn {
 
     public void setDataType(String dataType) {
         this.dataType = dataType;
+    }
+
+    public String getSalaryType() {
+        return salaryType;
+    }
+
+    public void setSalaryType(String salaryType) {
+        this.salaryType = salaryType;
     }
 }

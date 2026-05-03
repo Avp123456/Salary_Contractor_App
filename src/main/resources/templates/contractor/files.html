@@ -110,11 +110,21 @@
     </style>
 </head>
 <body>
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div th:replace="~{fragments/navbar :: navbar('Files')}"></div>
 
     <div class="container">
-        <div class="header-section">
-            <h2 class="fw-bold">Report History</h2>
+        <!-- Success/Error Alerts -->
+        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${param.success}">Success message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${param.error}">Error message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="header-section" style="margin-top: -10px;">
+            <h2 class="fw-bold">Files</h2>
             <button class="btn btn-upload" data-bs-toggle="modal" data-bs-target="#uploadModal">
                 + Upload New File
             </button>
@@ -149,11 +159,20 @@
                             </a>
                         </td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(files)}">
+                    <tr th:if="${#lists.isEmpty(files)}" class="no-records">
                         <td colspan="4" class="text-center py-5 text-muted">No files uploaded yet.</td>
                     </tr>
                 </tbody>
             </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3">
+                <div class="small text-muted" id="paginationInfo">Showing 1 to 10 of 10</div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
