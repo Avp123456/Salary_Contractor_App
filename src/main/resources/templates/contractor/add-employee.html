@@ -162,7 +162,10 @@
           <label class="form-label">
             <i class="bi bi-envelope me-1 text-primary"></i>Email Address
           </label>
-          <input type="email" th:field="*{email}" class="form-control" required>
+          <input type="email" th:field="*{email}" class="form-control" 
+                 pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$" 
+                 title="Please enter a valid email address (e.g., user@example.com)" 
+                 placeholder="e.g., employee@example.com" required>
         </div>
 
         <!-- MOBILE NO -->
@@ -170,7 +173,14 @@
           <label class="form-label">
             <i class="bi bi-phone me-1 text-primary"></i>Mobile Number
           </label>
-          <input type="text" th:field="*{mobileNo}" class="form-control" required>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-muted border-end-0 fw-semibold" id="country-code">+91</span>
+            <input type="text" th:field="*{mobileNo}" class="form-control border-start-0 ps-2" 
+                   pattern="[0-9]{10}" maxlength="10" minlength="10" 
+                   oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
+                   placeholder="Enter 10 digit mobile number"
+                   aria-describedby="country-code" required>
+          </div>
         </div>
 <!-- PASSWORD (ONLY IN ADD MODE) -->
 <div class="mb-4 position-relative" th:if="${employee.employeeId == null}">

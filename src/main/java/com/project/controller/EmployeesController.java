@@ -19,7 +19,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class EmployeesController {
 	 //time stamp
-    String time = java.time.LocalDateTime.now().toString();
+    private String getTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
     
     @Autowired
     private EmployeeService employeeService;
@@ -32,7 +34,7 @@ public class EmployeesController {
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
         List<Employee> list = employeeService.getByContractor(contractor);
         model.addAttribute("employees", list);
-        System.out.println("[INFO] employees page visited "+time);
+        System.out.println("[INFO] employees page visited "+getTime());
         
         return "contractor/employees";
     }
@@ -40,7 +42,7 @@ public class EmployeesController {
     @GetMapping("/contractor/add-employee")
     public String addEmployeePage(Model model) {
         model.addAttribute("employee", new Employee());
-        System.out.println("[ACTION] Add Employee button Clicked "+time);
+        System.out.println("[ACTION] Add Employee button Clicked "+getTime());
 
         return "contractor/add-employee";
     }
@@ -63,6 +65,11 @@ public class EmployeesController {
                 redirectAttributes.addFlashAttribute("error", "Email already exists!");
                 return "redirect:/contractor/add-employee";
             }
+
+            if (employeeService.mobileExists(employee.getMobileNo())) {
+                redirectAttributes.addFlashAttribute("error", "Mobile number already exists!");
+                return "redirect:/contractor/add-employee";
+            }
             
             // Assign current contractor to new employee
             employee.setContractor(contractor);
@@ -76,6 +83,12 @@ public class EmployeesController {
                     return "redirect:/contractor/edit-employee/" + employee.getEmployeeId();
                 }
 
+                // Check duplicate mobile (excluding current employee)
+                if (employeeService.mobileExistsForOther(employee.getMobileNo(), employee.getEmployeeId())) {
+                    redirectAttributes.addFlashAttribute("error", "Mobile number already exists!");
+                    return "redirect:/contractor/edit-employee/" + employee.getEmployeeId();
+                }
+
                 // Preserve fields not present in edit form (contractor, password, original empCode)
                 employee.setContractor(existing.getContractor());
                 employee.setPassword(existing.getPassword());
@@ -84,14 +97,14 @@ public class EmployeesController {
         }
 
         employeeService.save(employee);
-        System.out.println("[ACTION] Employee saved/updated: " + employee.getName() + " " + time);
+        System.out.println("[ACTION] Employee saved/updated: " + employee.getName() + " " + getTime());
         return "redirect:/contractor/employees";
     }
 
     @GetMapping("/contractor/delete-employee/{id}")
     public String deleteEmployee(@PathVariable Long id) {
         employeeService.deleteById(id);
-        System.out.println("[ACTION] Delete button Clicked "+time);
+        System.out.println("[ACTION] Delete button Clicked "+getTime());
         return "redirect:/contractor/employees";
     }
 
@@ -99,7 +112,7 @@ public class EmployeesController {
     public String editEmployee(@PathVariable Long id, Model model) {
         Employee emp = employeeService.getById(id);
         model.addAttribute("employee", emp);
-        System.out.println("[ACTION] Edit button Clicked "+time);
+        System.out.println("[ACTION] Edit button Clicked "+getTime());
 
         return "contractor/add-employee";
     }

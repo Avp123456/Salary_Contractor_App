@@ -177,7 +177,7 @@
                 </td>
                 <td><input type="number" class="form-control form-control-sm" min="1" oninput="this.classList.remove('is-invalid')" required></td>
                 <td class="text-center">
-                    <div class="d-flex justify-content-center gap-2 ed-container" style="display:none !important">
+                    <div class="d-flex justify-content-center gap-2 ed-container" style="display:none">
                         <div class="form-check form-check-inline m-0">
                             <input class="form-check-input" type="radio" name="salaryType_${index}" value="E">
                             <label class="form-check-label small">E</label>
@@ -231,7 +231,7 @@
                             </td>
                             <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}" min="1" required></td>
                             <td class="text-center">
-                                <div class="d-flex justify-content-center gap-2 ed-container" style="${col.dataType === 'NUMBER' ? '' : 'display:none !important'}">
+                                <div class="d-flex justify-content-center gap-2 ed-container" style="${col.dataType === 'NUMBER' ? '' : 'display:none'}">
                                     <div class="form-check form-check-inline m-0">
                                         <input class="form-check-input" type="radio" name="salaryType_${index}" value="E" ${col.salaryType === 'E' ? 'checked' : ''}>
                                         <label class="form-check-label small">E</label>

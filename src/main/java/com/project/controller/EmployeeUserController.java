@@ -263,6 +263,12 @@ public class EmployeeUserController {
                 if (isTotal) {
                     comp.put("type", "Total");
                     if (isNumber) totalAmount = valNum;
+                } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
+                    comp.put("type", "Deductions");
+                    if (isNumber) totalDeductions += valNum;
+                } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                    comp.put("type", "Earnings");
+                    if (isNumber) totalEarnings += valNum;
                 } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF")) {
                     comp.put("type", "Deductions");
                     if (isNumber) totalDeductions += valNum;

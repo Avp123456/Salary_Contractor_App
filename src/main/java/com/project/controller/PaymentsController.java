@@ -27,7 +27,9 @@ import javax.servlet.http.HttpSession;
 public class PaymentsController {
 
 	 //time stamp
-    String time = java.time.LocalDateTime.now().toString();
+    private String getTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
     
     @Autowired
     private UploadedFileDataRepository dataRepo;
@@ -165,7 +167,7 @@ public class PaymentsController {
         }
 
         model.addAttribute("payments", paymentList);
-System.out.println("[INFO] Payments Page Visited "+time);
+System.out.println("[INFO] Payments Page Visited "+getTime());
         return "contractor/payments";
     }
 
@@ -256,7 +258,7 @@ System.out.println("[INFO] Payments Page Visited "+time);
             else if (col.startsWith("num")) setNumber(data, col, val);
         }
         dataRepo.save(data);
-        System.out.println("[ACTION] Payment Data Updated "+ time);
+        System.out.println("[ACTION] Payment Data Updated "+ getTime());
         return "OK";
     }
 
@@ -272,7 +274,7 @@ System.out.println("[INFO] Payments Page Visited "+time);
         
         data.setStatus(status);
         dataRepo.save(data);
-        System.out.println("[ACTION] Payment Status Updated "+ time);
+        System.out.println("[ACTION] Payment Status Updated "+ getTime());
 
         
         return "OK";
@@ -289,7 +291,7 @@ System.out.println("[INFO] Payments Page Visited "+time);
         
         data.setPayslipGenerated(true);
         dataRepo.save(data);
-        System.out.println("[ACTION] Payment PaySlip Generated "+ time);
+        System.out.println("[ACTION] Payment PaySlip Generated "+ getTime());
 
         return "OK";
     }
@@ -362,6 +364,12 @@ System.out.println("[INFO] Payments Page Visited "+time);
                     if (isTotal) {
                         comp.put("type", "Total");
                         if (isNumber) totalAmount = valNum;
+                    } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
+                        comp.put("type", "Deductions");
+                        if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
+                    } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                        comp.put("type", "Earnings");
+                        if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
                     } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF")) {
                         comp.put("type", "Deductions");
                         if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
@@ -400,7 +408,7 @@ System.out.println("[INFO] Payments Page Visited "+time);
         model.addAttribute("totalAmount", totalAmount);
         model.addAttribute("totalEarnings", totalEarnings);
         model.addAttribute("totalDeductions", totalDeductions);
-        System.out.println("[INFO] Payment Payslip Viewed "+ time);
+        System.out.println("[INFO] Payment Payslip Viewed "+ getTime());
 
         return "contractor/payslip";
     }

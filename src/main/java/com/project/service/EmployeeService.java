@@ -56,4 +56,12 @@ public class EmployeeService {
     public boolean emailExistsForOther(String email, Long id) {
         return !employeeRepository.findByEmailAndEmployeeIdNot(email, id).isEmpty();
     }
+
+    public boolean mobileExists(String mobileNo) {
+        return !employeeRepository.findByMobileNo(mobileNo).isEmpty();
+    }
+
+    public boolean mobileExistsForOther(String mobileNo, Long id) {
+        return !employeeRepository.findByMobileNoAndEmployeeIdNot(mobileNo, id).isEmpty();
+    }
 }

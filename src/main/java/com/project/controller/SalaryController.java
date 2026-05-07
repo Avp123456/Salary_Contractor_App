@@ -20,7 +20,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class SalaryController {
 	 //time stamp
-    String time = java.time.LocalDateTime.now().toString();
+    private String getTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
     @Autowired
     private UploadedFileDataRepository dataRepo;
     
@@ -39,7 +41,7 @@ public class SalaryController {
     public String salary(Model model, HttpSession session) {
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("files", fileRepo.findByContractorId(contractorId));
-        System.out.println("[INFO] Salary Page Visited "+time);
+        System.out.println("[INFO] Salary Page Visited "+getTime());
 
         return "contractor/salary";
     }
@@ -49,7 +51,7 @@ public class SalaryController {
         Long contractorId = getCurrentContractorId(session);
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
         if (file == null || !file.getContractorId().equals(contractorId)) {
-            System.out.println("[INFO]Salary Page Visited "+time);
+            System.out.println("[INFO]Salary Page Visited "+getTime());
 
         	return"redirect:/contractor/salary";}
 
@@ -107,7 +109,7 @@ public class SalaryController {
         model.addAttribute("selectedFileId", fileId);
         model.addAttribute("columns", displayColumns);
         model.addAttribute("rows", rows);
-        System.out.println("[INFO] Salary Page Visited "+time);
+        System.out.println("[INFO] Salary Page Visited "+getTime());
 
         return "contractor/salary";
     }

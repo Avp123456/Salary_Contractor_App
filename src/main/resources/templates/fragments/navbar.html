@@ -4,24 +4,23 @@
 <head>
 <style>
 .logout-btn {
-    background-color: #ff3b3b;
-    color: black;
+    background-color: #ef4444;
+    color: white !important;
     padding: 6px 18px;
-    border-radius: 10px;
-    border: 2px solid black;
+    border-radius: 8px;
     font-weight: 600;
-    text-decoration: none; /* remove underline */
+    text-decoration: none;
     display: inline-block;
-    margin-left: 10px;
     transition: all 0.3s ease;
+    border: none;
+    font-size: 0.85rem;
 }
 
 /* 🔥 Hover animation */
 .logout-btn:hover {
-    background-color: #ff1a1a;
-    color: white;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 15px rgba(255, 0, 0, 0.4);
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
     /* Global Fade-in Animation */
@@ -110,12 +109,9 @@
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Employees' ? 'active' : ''}" href="/contractor/employees">Employees</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Salary' ? 'active' : ''}" href="/contractor/salary">Salary</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Payments' ? 'active' : ''}" href="/contractor/payments">Payments</a></li>
-       <form th:action="@{/logout}" method="post" style="display:inline;">
-    <button type="submit" class="btn btn-danger btn-sm px-3"
-            style="border-radius: 8px; font-weight: 500; margin-top:5px">
-        Logout
-    </button>
-</form>
+        <li class="nav-item ms-lg-2">
+          <a class="logout-btn" href="/logout" style="margin-top: 5px;">Logout</a>
+        </li>
       </ul>
     </div>
   </div>

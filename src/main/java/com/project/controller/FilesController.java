@@ -33,7 +33,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class FilesController {
 	 //time stamp
-    String time = java.time.LocalDateTime.now().toString();
+    private String getTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
     
     @Autowired
     private UploadedFileDataRepository dataRepo;
@@ -96,7 +98,7 @@ public class FilesController {
             existing.setSize(file.getSize());
             existing.setUploadDate(java.time.LocalDateTime.now());
             fileRepo.save(existing);
-            System.out.println("[ACTION] Duplicate file updated on disk. "+ time);
+            System.out.println("[ACTION] Duplicate file updated on disk. "+ getTime());
 
         } else {
             // New file — create fresh record
@@ -300,7 +302,7 @@ public class FilesController {
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
         
         if (file == null || !file.getContractorId().equals(contractorId)) {
-        	 System.out.println("[INFO] Files Page Visited "+time);
+        	 System.out.println("[INFO] Files Page Visited "+getTime());
             return "redirect:/contractor/files";
         }
 
@@ -343,7 +345,7 @@ public class FilesController {
         }
         
         if (excelData == null) {
-System.out.println("[INFO] Report Page Visited "+time);
+System.out.println("[INFO] Report Page Visited "+getTime());
             return "redirect:/contractor/files?error=Excel data not found. Please re-upload.";
         }
         
@@ -394,7 +396,7 @@ System.out.println("[INFO] Report Page Visited "+time);
         model.addAttribute("data", filteredData);
         model.addAttribute("columns", displayColumns);
         session.setAttribute("processedData", filteredData);
-        System.out.println("[INFO] Preview Page Visited "+time);
+        System.out.println("[INFO] Preview Page Visited "+getTime());
         return "contractor/preview";
     }
 
@@ -410,10 +412,10 @@ System.out.println("[INFO] Report Page Visited "+time);
             dataRepo.deleteByFileId(id);
             columnRepo.deleteByFileId(id);
             fileRepo.delete(file);
-            System.out.println("[INFO] File and data deleted from disk and DB. "+time);
+            System.out.println("[INFO] File and data deleted from disk and DB. "+getTime());
 
         }
-        System.out.println("[INFO] Files Page Visited "+time);
+        System.out.println("[INFO] Files Page Visited "+getTime());
 
         return "redirect:/contractor/files";
     }

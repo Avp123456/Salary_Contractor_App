@@ -25,7 +25,9 @@ import javax.servlet.http.HttpSession;
 @Controller
 public class DashBoardController {
 	 //time stamp
-    String time = java.time.LocalDateTime.now().toString();
+    private String getTime() {
+        return java.time.LocalDateTime.now().toString();
+    }
     
     @Autowired
     private UploadedFileDataRepository dataRepo;
@@ -124,7 +126,7 @@ public class DashBoardController {
         model.addAttribute("totalEmployees", totalEmployees);
         model.addAttribute("totalSalary", totalSalary);
         model.addAttribute("totalFiles", fileRepo.findByContractorId(contractorId).size());
-        System.out.println("[INFO] Dashboard page visited "+time);
+        System.out.println("[INFO] Dashboard page visited "+getTime());
         return "contractor/dashboard";
     }
 }

@@ -23,8 +23,9 @@ public class MainController {
 	@Autowired
 	private EmployeeService employeeService;
 
-	//time stamp
-	String time = java.time.LocalDateTime.now().toString();
+	private String getTime() {
+		return java.time.LocalDateTime.now().toString();
+	}
 
 
 
@@ -39,7 +40,7 @@ public class MainController {
 	@GetMapping("/login")
 	public String loginPage() {
 		//log
-		System.out.println("[INFO] Login Page Visited  "+time );
+		System.out.println("[INFO] Login Page Visited  "+getTime() );
 
 		return "login";
 	}
@@ -62,7 +63,7 @@ public class MainController {
 			if (contractor != null) {
 				session.setAttribute("loggedInContractor", contractor);
 				//log
-				System.out.println("[INFO] Contractor Logged in  "+ time);
+				System.out.println("[INFO] Contractor Logged in  "+ getTime());
 				return "redirect:/contractor/dashboard";
 			} else {
 				model.addAttribute("error", "Invalid contractor credentials");
@@ -77,7 +78,7 @@ public class MainController {
 
 			if (employee != null) {
 				session.setAttribute("loggedInEmployee", employee);
-				System.out.println("[INFO] Employee Logged in  "+ time);
+				System.out.println("[INFO] Employee Logged in  "+ getTime());
 				
 				if (!employee.getPasswordChanged()) {
 					return "redirect:/employee/change-password";
@@ -94,7 +95,7 @@ public class MainController {
 	@GetMapping("/logout")
 	public String logout(HttpSession session) {
 		session.invalidate();
-		System.out.println("[INFO] Contractor Logged Out  "+ time);
+		System.out.println("[INFO] Contractor Logged Out  "+ getTime());
 		return "redirect:/?logout";
 	}
 
