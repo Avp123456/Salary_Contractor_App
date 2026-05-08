@@ -15,6 +15,9 @@ public class ReportConfigurationColumn {
     private Integer columnPosition;
     private String dataType;
     private String salaryType;
+    private String fileType;
+    private Boolean parse = true;
+    private Boolean isKey = false;
 
     public Long getId() {
         return id;
@@ -62,5 +65,29 @@ public class ReportConfigurationColumn {
 
     public void setSalaryType(String salaryType) {
         this.salaryType = salaryType;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public Boolean getParse() {
+        return parse;
+    }
+
+    public void setParse(Boolean parse) {
+        this.parse = parse;
+    }
+
+    public Boolean getIsKey() {
+        return isKey;
+    }
+
+    public void setIsKey(Boolean isKey) {
+        this.isKey = isKey;
     }
 }

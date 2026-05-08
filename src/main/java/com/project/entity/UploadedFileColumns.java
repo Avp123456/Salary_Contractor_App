@@ -32,6 +32,8 @@ import javax.persistence.Table;
 	    private String actualColumn;     // str1 / num1
 	    private Boolean parse;           // include in parsing
 	    private String salaryType;       // E for Earnings, D for Deductions
+	    private String fileType;
+	    private Boolean isKey = false;
 		public Long getId() {
 			return id;
 		}
@@ -80,6 +82,18 @@ import javax.persistence.Table;
 		public void setSalaryType(String salaryType) {
 			this.salaryType = salaryType;
 		}
+	    public String getFileType() {
+	        return fileType;
+	    }
+	    public void setFileType(String fileType) {
+	        this.fileType = fileType;
+	    }
+	    public Boolean getIsKey() {
+	        return isKey;
+	    }
+	    public void setIsKey(Boolean isKey) {
+	        this.isKey = isKey;
+	    }
 	    
 	    
 	}

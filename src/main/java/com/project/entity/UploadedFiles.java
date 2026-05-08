@@ -21,6 +21,7 @@ import javax.persistence.Table;
 	    private Integer headerCount;
 	    private Integer trailerCount;
 	    private Integer totalPayableColumn; // Index of total payable amount column
+	    private Integer overtimeTotalAmountColumn;
 	    @javax.persistence.Column(name = "file_path")
 	    private String filePath;
 	    private Long contractorId;
@@ -78,6 +79,12 @@ import javax.persistence.Table;
 		}
 		public void setTotalPayableColumn(Integer totalPayableColumn) {
 			this.totalPayableColumn = totalPayableColumn;
+		}
+		public Integer getOvertimeTotalAmountColumn() {
+			return overtimeTotalAmountColumn;
+		}
+		public void setOvertimeTotalAmountColumn(Integer overtimeTotalAmountColumn) {
+			this.overtimeTotalAmountColumn = overtimeTotalAmountColumn;
 		}
 	    
 	}

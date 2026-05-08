@@ -76,12 +76,19 @@
                         <input type="number" id="trailerCount" class="form-control form-control-sm" 
                                  th:value="${trailerCount}" min="0">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label fw-bold text-muted">Total Payable Amount Column Position</label>
                         <input type="number" id="totalPayableColumn" class="form-control form-control-sm" 
                                  th:value="${totalPayableColumn}" 
                                  oninput="this.classList.remove('is-invalid')"
                                  min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-muted">Overtime Total Amount Column Position</label>
+                        <input type="number" id="overtimeTotalAmountColumn" class="form-control form-control-sm" 
+                                 th:value="${overtimeTotalAmountColumn}" 
+                                 oninput="this.classList.remove('is-invalid')"
+                                 min="1">
                     </div>
                 </div>
             </div>
@@ -95,23 +102,34 @@
                 <table class="table table-hover" id="columnTable">
                 <thead>
                     <tr>
+                        <th>File Name</th>
                         <th>Column Name</th>
                         <th style="width: 120px;">Data Type</th>
                         <th style="width: 150px;">Position (Excel)</th>
                         <th style="width: 120px;" class="text-center">E/D</th>
+                        <th style="width: 100px;">Parse</th>
+                        <th style="width: 100px;">Key</th>
                         <th style="width: 80px;" class="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody id="columnBody">
                     <tr th:each="col, stat : ${existingColumns}">
-                        <td><input type="text" class="form-control form-control-sm" th:value="${col.columnName}" oninput="this.classList.remove('is-invalid')" required></td>
                         <td>
-                            <select class="form-select form-select-sm" onchange="toggleED(this)" required>
+                            <select class="form-select form-select-sm file-type-select" onchange="handleKeyLogic(this)" required>
+                                <option value="" disabled th:selected="${col.fileType == null or col.fileType == ''}">-- Select --</option>
+                                <option th:each="f : ${uploadedFiles}" th:value="${f.fileName}" th:text="${f.fileName}" th:selected="${col.fileType == f.fileName}"></option>
+                                <option th:if="${#lists.isEmpty(uploadedFiles)}" value="Regular File" th:selected="${col.fileType == 'Regular File'}">Regular File</option>
+                                <option th:if="${#lists.isEmpty(uploadedFiles)}" value="Overtime File" th:selected="${col.fileType == 'Overtime File'}">Overtime File</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="form-control form-control-sm column-name-input" th:value="${col.columnName}" oninput="this.classList.remove('is-invalid')" required></td>
+                        <td>
+                            <select class="form-select form-select-sm data-type-select" onchange="toggleED(this)" required>
                                 <option value="STRING" th:selected="${col.dataType == 'STRING'}">STRING</option>
                                 <option value="NUMBER" th:selected="${col.dataType == 'NUMBER'}">NUMBER</option>
                             </select>
                         </td>
-                        <td><input type="number" class="form-control form-control-sm" th:value="${col.columnPosition}" min="1" oninput="this.classList.remove('is-invalid')" required></td>
+                        <td><input type="number" class="form-control form-control-sm column-pos-input" th:value="${col.columnPosition}" min="1" oninput="this.classList.remove('is-invalid')" required></td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-2 ed-container" th:style="${col.dataType == 'NUMBER' ? '' : 'display:none'}">
                                 <div class="form-check form-check-inline m-0">
@@ -123,6 +141,18 @@
                                     <label class="form-check-label small">D</label>
                                 </div>
                             </div>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm parse-select">
+                                <option value="true" th:selected="${col.parse != false}">Yes</option>
+                                <option value="false" th:selected="${col.parse == false}">No</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm key-select" onchange="handleKeyLogic(this)">
+                                <option value="false" th:selected="${col.isKey == false}">No</option>
+                                <option value="true" th:selected="${col.isKey == true}">Yes</option>
+                            </select>
                         </td>
                         <td class="text-center">
                             <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
@@ -148,8 +178,26 @@
     <script th:inline="javascript">
         /*[Hold fileId in JS]*/
         const fileId = [[${fileId}]];
+        /*[Hold uploadedFiles in JS]*/
+        const uploadedFiles = /*[[${uploadedFiles}]]*/ [];
         let currentPage = 1;
         const recordsPerPage = 10;
+        
+        function getFileOptionsHTML(selectedFileName = null) {
+            let html = `<option value="" disabled ${!selectedFileName ? 'selected' : ''}>-- Select --</option>`;
+            if (uploadedFiles && uploadedFiles.length > 0) {
+                uploadedFiles.forEach(f => {
+                    const isSelected = selectedFileName === f.fileName ? 'selected' : '';
+                    html += `<option value="${f.fileName}" ${isSelected}>${f.fileName}</option>`;
+                });
+            } else {
+                const regSelected = selectedFileName === 'Regular File' ? 'selected' : '';
+                const ovtSelected = selectedFileName === 'Overtime File' ? 'selected' : '';
+                html += `<option value="Regular File" ${regSelected}>Regular File</option>
+                         <option value="Overtime File" ${ovtSelected}>Overtime File</option>`;
+            }
+            return html;
+        }
 
         function toggleED(select) {
             select.classList.remove('is-invalid');
@@ -163,19 +211,45 @@
             }
         }
 
+        function handleKeyLogic(changedElement) {
+            if (!changedElement) return;
+            const row = changedElement.closest('tr');
+            const fileTypeSelect = row.querySelector('.file-type-select');
+            const keySelect = row.querySelector('.key-select');
+            
+            if (keySelect && keySelect.value === 'true' && fileTypeSelect) {
+                const currentFileType = fileTypeSelect.value;
+                const allRows = document.querySelectorAll('#columnBody tr');
+                allRows.forEach(r => {
+                    if (r !== row) {
+                        const ft = r.querySelector('.file-type-select').value;
+                        const ks = r.querySelector('.key-select');
+                        if (ft === currentFileType && ks && ks.value === 'true') {
+                            ks.value = 'false';
+                        }
+                    }
+                });
+            }
+        }
+
         function addRow() {
             const tbody = document.getElementById('columnBody');
             const index = tbody.rows.length;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm" oninput="this.classList.remove('is-invalid')" required></td>
                 <td>
-                    <select class="form-select form-select-sm" onchange="toggleED(this)" required>
+                    <select class="form-select form-select-sm file-type-select" onchange="handleKeyLogic(this)" required>
+                        ${getFileOptionsHTML()}
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm column-name-input" oninput="this.classList.remove('is-invalid')" required></td>
+                <td>
+                    <select class="form-select form-select-sm data-type-select" onchange="toggleED(this)" required>
                         <option value="STRING">STRING</option>
                         <option value="NUMBER">NUMBER</option>
                     </select>
                 </td>
-                <td><input type="number" class="form-control form-control-sm" min="1" oninput="this.classList.remove('is-invalid')" required></td>
+                <td><input type="number" class="form-control form-control-sm column-pos-input" min="1" oninput="this.classList.remove('is-invalid')" required></td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2 ed-container" style="display:none">
                         <div class="form-check form-check-inline m-0">
@@ -187,6 +261,18 @@
                             <label class="form-check-label small">D</label>
                         </div>
                     </div>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm parse-select">
+                        <option value="true" selected>Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm key-select" onchange="handleKeyLogic(this)">
+                        <option value="false" selected>No</option>
+                        <option value="true">Yes</option>
+                    </select>
                 </td>
                 <td class="text-center">
                     <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
@@ -215,6 +301,7 @@
                     document.getElementById('headerCount').value = data.headerCount;
                     document.getElementById('trailerCount').value = data.trailerCount;
                     document.getElementById('totalPayableColumn').value = data.totalPayableColumn;
+                    document.getElementById('overtimeTotalAmountColumn').value = data.overtimeTotalAmountColumn || '';
                     
                     const tbody = document.getElementById('columnBody');
                     tbody.innerHTML = ''; // Clear existing
@@ -222,14 +309,19 @@
                     data.columns.forEach((col, index) => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><input type="text" class="form-control form-control-sm" value="${col.columnName}" required></td>
                             <td>
-                                <select class="form-select form-select-sm" onchange="toggleED(this)" required>
+                                <select class="form-select form-select-sm file-type-select" onchange="handleKeyLogic(this)" required>
+                                    ${getFileOptionsHTML(col.fileType)}
+                                </select>
+                            </td>
+                            <td><input type="text" class="form-control form-control-sm column-name-input" value="${col.columnName}" required></td>
+                            <td>
+                                <select class="form-select form-select-sm data-type-select" onchange="toggleED(this)" required>
                                     <option value="STRING" ${col.dataType === 'STRING' ? 'selected' : ''}>STRING</option>
                                     <option value="NUMBER" ${col.dataType === 'NUMBER' ? 'selected' : ''}>NUMBER</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}" min="1" required></td>
+                            <td><input type="number" class="form-control form-control-sm column-pos-input" value="${col.columnPosition}" min="1" required></td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-2 ed-container" style="${col.dataType === 'NUMBER' ? '' : 'display:none'}">
                                     <div class="form-check form-check-inline m-0">
@@ -241,6 +333,18 @@
                                         <label class="form-check-label small">D</label>
                                     </div>
                                 </div>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm parse-select">
+                                    <option value="true" ${col.parse !== false ? 'selected' : ''}>Yes</option>
+                                    <option value="false" ${col.parse === false ? 'selected' : ''}>No</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm key-select" onchange="handleKeyLogic(this)">
+                                    <option value="false" ${!col.isKey ? 'selected' : ''}>No</option>
+                                    <option value="true" ${col.isKey ? 'selected' : ''}>Yes</option>
+                                </select>
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-outline-danger btn-sm py-1 px-2" style="font-size: 0.75rem;" onclick="removeRow(this)">Delete</button>
@@ -321,13 +425,19 @@
 
             rows.forEach((r, idx) => {
                 const inputs = r.querySelectorAll('input:not([type="radio"]), select');
-                const nameInput = inputs[0];
-                const typeSelect = inputs[1];
-                const posInput = inputs[2];
+                const fileTypeSelect = r.querySelector('.file-type-select');
+                const nameInput = r.querySelector('.column-name-input');
+                const typeSelect = r.querySelector('.data-type-select');
+                const posInput = r.querySelector('.column-pos-input');
+                const parseSelect = r.querySelector('.parse-select');
+                const keySelect = r.querySelector('.key-select');
                 
+                const fileType = fileTypeSelect ? fileTypeSelect.value : 'Regular File';
                 const name = nameInput.value.trim();
                 const pos = posInput.value.trim();
                 const type = typeSelect.value;
+                const parseVal = parseSelect ? parseSelect.value === 'true' : true;
+                const isKeyVal = keySelect ? keySelect.value === 'true' : false;
                 
                 // Reset states
                 nameInput.classList.remove('is-invalid');
@@ -349,11 +459,13 @@
                 }
 
                 data.push({
+                    fileType: fileType,
                     columnName: name,
                     dataType: type,
                     columnPosition: parseInt(pos) || 0,
                     salaryType: sType,
-                    parse: true
+                    parse: parseVal,
+                    isKey: isKeyVal
                 });
             });
 
@@ -374,6 +486,7 @@
                 headerCount: parseInt(document.getElementById('headerCount').value) || 0,
                 trailerCount: parseInt(document.getElementById('trailerCount').value) || 0,
                 totalPayableColumn: parseInt(document.getElementById('totalPayableColumn').value) || 0,
+                overtimeTotalAmountColumn: parseInt(document.getElementById('overtimeTotalAmountColumn').value) || 0,
                 columns: data
             };
 

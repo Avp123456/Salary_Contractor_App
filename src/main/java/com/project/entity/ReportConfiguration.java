@@ -16,6 +16,7 @@ public class ReportConfiguration {
     private Integer headerCount;
     private Integer trailerCount;
     private Integer totalPayableColumn;
+    private Integer overtimeTotalAmountColumn;
 
     public Long getId() {
         return id;
@@ -63,5 +64,13 @@ public class ReportConfiguration {
 
     public void setTotalPayableColumn(Integer totalPayableColumn) {
         this.totalPayableColumn = totalPayableColumn;
+    }
+
+    public Integer getOvertimeTotalAmountColumn() {
+        return overtimeTotalAmountColumn;
+    }
+
+    public void setOvertimeTotalAmountColumn(Integer overtimeTotalAmountColumn) {
+        this.overtimeTotalAmountColumn = overtimeTotalAmountColumn;
     }
 }

@@ -94,9 +94,13 @@
                                 <label class="form-label">Trailer Skip</label>
                                 <input type="number" id="trailerCount" class="form-control form-control-sm" value="0">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <label class="form-label">Total Payable Amount Col Pos</label>
                                 <input type="number" id="totalPayableColumn" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Overtime Total Col Pos</label>
+                                <input type="number" id="overtimeTotalAmountColumn" class="form-control form-control-sm">
                             </div>
                         </div>
                     </div>
@@ -109,10 +113,12 @@
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
-                                <tr>
+                                    <th>File Name</th>
                                     <th>Column Name</th>
                                     <th>Data Type</th>
-                                    <th>Position (Excel)</th>
+                                    <th>Pos (Excel)</th>
+                                    <th>Parse</th>
+                                    <th>Key</th>
                                     <th class="text-center"></th>
                                 </tr>
                             </thead>
@@ -141,7 +147,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
+    <script th:inline="javascript">
         let modal;
         let configCurrentPage = 1;
         const configPageSize = 10;
@@ -149,7 +155,10 @@
 
         let columnCurrentPage = 1;
         const columnPageSize = 5;
-        let columnsData = []; // Array of {columnName, dataType, columnPosition}
+        let columnsData = []; // Array of {columnName, dataType, columnPosition, fileType, parse, isKey}
+        
+        /*[Hold uploadedFiles in JS]*/
+        const uploadedFiles = /*[[${uploadedFiles}]]*/ [];
 
         document.addEventListener('DOMContentLoaded', function() {
             modal = new bootstrap.Modal(document.getElementById('configModal'));
@@ -190,6 +199,7 @@
             document.getElementById('headerCount').value = '0';
             document.getElementById('trailerCount').value = '0';
             document.getElementById('totalPayableColumn').value = '';
+            document.getElementById('overtimeTotalAmountColumn').value = '';
             columnsData = [];
             columnCurrentPage = 1;
             document.querySelector('#configModal .modal-title').innerText = 'New Configuration';
@@ -207,12 +217,16 @@
                     document.getElementById('headerCount').value = data.headerCount;
                     document.getElementById('trailerCount').value = data.trailerCount;
                     document.getElementById('totalPayableColumn').value = data.totalPayableColumn;
+                    document.getElementById('overtimeTotalAmountColumn').value = data.overtimeTotalAmountColumn || '';
                     document.querySelector('#configModal .modal-title').innerText = 'Edit Configuration';
                     
                     columnsData = data.columns.map(col => ({
+                        fileType: col.fileType || 'Regular File',
                         columnName: col.columnName,
                         dataType: col.dataType,
-                        columnPosition: col.columnPosition
+                        columnPosition: col.columnPosition,
+                        parse: col.parse === false ? false : true,
+                        isKey: col.isKey === true ? true : false
                     }));
                     columnCurrentPage = 1;
                     renderColumnTable();
@@ -225,7 +239,7 @@
             saveCurrentPageData();
             
             // Add new empty column
-            columnsData.push({ columnName: '', dataType: 'STRING', columnPosition: '' });
+            columnsData.push({ fileType: '', columnName: '', dataType: 'STRING', columnPosition: '', parse: true, isKey: false });
             
             // Go to last page
             columnCurrentPage = Math.ceil(columnsData.length / columnPageSize) || 1;
@@ -241,9 +255,12 @@
                 if (dataIdx < columnsData.length) {
                     const inputs = row.querySelectorAll('input, select');
                     columnsData[dataIdx] = {
-                        columnName: inputs[0].value.trim(),
-                        dataType: inputs[1].value,
-                        columnPosition: inputs[2].value
+                        fileType: inputs[0].value,
+                        columnName: inputs[1].value.trim(),
+                        dataType: inputs[2].value,
+                        columnPosition: inputs[3].value,
+                        parse: inputs[4].value === 'true',
+                        isKey: inputs[5].value === 'true'
                     };
                 }
             });
@@ -260,7 +277,26 @@
             pageData.forEach((col, idx) => {
                 const globalIdx = startIndex + idx;
                 const row = document.createElement('tr');
+                let fileOptionsHTML = '';
+                if (uploadedFiles && uploadedFiles.length > 0) {
+                    uploadedFiles.forEach(f => {
+                        const isSelected = col.fileType === f.fileName ? 'selected' : '';
+                        fileOptionsHTML += `<option value="${f.fileName}" ${isSelected}>${f.fileName}</option>`;
+                    });
+                } else {
+                    const regSelected = col.fileType === 'Regular File' ? 'selected' : '';
+                    const ovtSelected = col.fileType === 'Overtime File' ? 'selected' : '';
+                    fileOptionsHTML += `<option value="Regular File" ${regSelected}>Regular File</option>
+                                        <option value="Overtime File" ${ovtSelected}>Overtime File</option>`;
+                }
+
                 row.innerHTML = `
+                    <td>
+                        <select class="form-select form-select-sm" onchange="handleKeyLogic(this)" required>
+                            <option value="" disabled ${!col.fileType ? 'selected' : ''}>-- Select --</option>
+                            ${fileOptionsHTML}
+                        </select>
+                    </td>
                     <td><input type="text" class="form-control form-control-sm" value="${col.columnName}"></td>
                     <td>
                         <select class="form-select form-select-sm">
@@ -269,6 +305,18 @@
                         </select>
                     </td>
                     <td><input type="number" class="form-control form-control-sm" value="${col.columnPosition}"></td>
+                    <td>
+                        <select class="form-select form-select-sm">
+                            <option value="true" ${col.parse ? 'selected' : ''}>Yes</option>
+                            <option value="false" ${!col.parse ? 'selected' : ''}>No</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm is-key-select" onchange="handleKeyLogic(this)">
+                            <option value="false" ${!col.isKey ? 'selected' : ''}>No</option>
+                            <option value="true" ${col.isKey ? 'selected' : ''}>Yes</option>
+                        </select>
+                    </td>
                     <td class="text-center">
                         <button class="btn btn-link text-danger btn-sm p-0" onclick="removeColumn(${globalIdx})">&times;</button>
                     </td>
@@ -282,6 +330,23 @@
             document.getElementById('prevColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === 1);
             document.getElementById('nextColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === totalPages);
             document.getElementById('columnPagination').style.display = totalPages > 0 ? 'flex' : 'none';
+        }
+
+        function handleKeyLogic(changedSelect) {
+            saveCurrentPageData();
+            if (changedSelect && changedSelect.value === 'true') {
+                const row = changedSelect.closest('tr');
+                const fileType = row.querySelector('select:first-child').value;
+                const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+                const globalIndex = ((columnCurrentPage - 1) * columnPageSize) + rowIndex;
+                
+                columnsData.forEach((col, idx) => {
+                    if (idx !== globalIndex && col.fileType === fileType && col.isKey) {
+                        col.isKey = false;
+                    }
+                });
+                renderColumnTable();
+            }
         }
 
         function changeColumnPage(page) {
@@ -306,13 +371,14 @@
             const id = document.getElementById('configId').value;
             const configName = document.getElementById('configName').value.trim();
             const totalPayableCol = document.getElementById('totalPayableColumn').value;
+            const overtimeTotalCol = document.getElementById('overtimeTotalAmountColumn').value;
 
             if (!configName || !totalPayableCol) {
                 Swal.fire('Error', 'Configuration name and Total Payable column are mandatory.', 'error');
                 return;
             }
 
-            const validColumns = columnsData.filter(c => c.columnName.trim() !== '');
+            const validColumns = columnsData.filter(c => c.columnName && c.columnName.trim() !== '');
 
             const data = {
                 id: id ? parseInt(id) : null,
@@ -320,10 +386,14 @@
                 headerCount: parseInt(document.getElementById('headerCount').value) || 0,
                 trailerCount: parseInt(document.getElementById('trailerCount').value) || 0,
                 totalPayableColumn: parseInt(totalPayableCol),
+                overtimeTotalAmountColumn: overtimeTotalCol ? parseInt(overtimeTotalCol) : 0,
                 columns: validColumns.map(c => ({
+                    fileType: c.fileType,
                     columnName: c.columnName,
                     dataType: c.dataType,
-                    columnPosition: parseInt(c.columnPosition) || 0
+                    columnPosition: parseInt(c.columnPosition) || 0,
+                    parse: c.parse,
+                    isKey: c.isKey
                 }))
             };
 

@@ -140,6 +140,7 @@ public class FilesController {
         int headerCount = payload.get("headerCount") != null ? Integer.parseInt(payload.get("headerCount").toString()) : 0;
         int trailerCount = payload.get("trailerCount") != null ? Integer.parseInt(payload.get("trailerCount").toString()) : 0;
         int totalPayableColumn = payload.get("totalPayableColumn") != null ? Integer.parseInt(payload.get("totalPayableColumn").toString()) : 0;
+        int overtimeTotalAmountColumn = payload.get("overtimeTotalAmountColumn") != null && !payload.get("overtimeTotalAmountColumn").toString().isEmpty() ? Integer.parseInt(payload.get("overtimeTotalAmountColumn").toString()) : 0;
         List<java.util.Map<String, Object>> columnData = (List<java.util.Map<String, Object>>) payload.get("columns");
         
         Long contractorId = getCurrentContractorId(session);
@@ -149,6 +150,7 @@ public class FilesController {
         file.setHeaderCount(headerCount);
         file.setTrailerCount(trailerCount);
         file.setTotalPayableColumn(totalPayableColumn);
+        file.setOvertimeTotalAmountColumn(overtimeTotalAmountColumn);
         fileRepo.save(file);
 
         columnRepo.deleteByFileId(fileId);
@@ -165,6 +167,8 @@ public class FilesController {
             c.setColumnPosition(Integer.parseInt(colMap.get("columnPosition").toString()));
             c.setParse(Boolean.parseBoolean(colMap.get("parse").toString()));
             c.setSalaryType(colMap.get("salaryType") != null ? colMap.get("salaryType").toString() : null);
+            c.setFileType(colMap.get("fileType") != null ? colMap.get("fileType").toString() : null);
+            c.setIsKey(colMap.get("isKey") != null ? Boolean.parseBoolean(colMap.get("isKey").toString()) : false);
             
             if (c.isParse() != null && c.isParse()) {
                 if ("STRING".equalsIgnoreCase(c.getDataType())) {
@@ -313,8 +317,10 @@ public class FilesController {
         model.addAttribute("headerCount", file.getHeaderCount() != null ? file.getHeaderCount() : 0);
         model.addAttribute("trailerCount", file.getTrailerCount() != null ? file.getTrailerCount() : 0);
         model.addAttribute("totalPayableColumn", file.getTotalPayableColumn() != null ? file.getTotalPayableColumn() : 0);
+        model.addAttribute("overtimeTotalAmountColumn", file.getOvertimeTotalAmountColumn() != null ? file.getOvertimeTotalAmountColumn() : 0);
         model.addAttribute("existingColumns", existingColumns);
         model.addAttribute("configurations", configurations);
+        model.addAttribute("uploadedFiles", fileRepo.findByContractorId(contractorId));
         
         session.setAttribute("fileId", fileId);
         return "contractor/columns";
@@ -424,6 +430,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
     public String configurations(Model model, HttpSession session) {
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("configurations", configRepo.findByContractorId(contractorId));
+        model.addAttribute("uploadedFiles", fileRepo.findByContractorId(contractorId));
         return "contractor/configuration";
     }
 
@@ -438,6 +445,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
         int header = Integer.parseInt(payload.get("headerCount").toString());
         int trailer = Integer.parseInt(payload.get("trailerCount").toString());
         int totalPos = Integer.parseInt(payload.get("totalPayableColumn").toString());
+        int overtimeTotalPos = payload.get("overtimeTotalAmountColumn") != null && !payload.get("overtimeTotalAmountColumn").toString().isEmpty() ? Integer.parseInt(payload.get("overtimeTotalAmountColumn").toString()) : 0;
         List<java.util.Map<String, Object>> columns = (List<java.util.Map<String, Object>>) payload.get("columns");
 
         ReportConfiguration config;
@@ -454,6 +462,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
         config.setHeaderCount(header);
         config.setTrailerCount(trailer);
         config.setTotalPayableColumn(totalPos);
+        config.setOvertimeTotalAmountColumn(overtimeTotalPos);
         configRepo.save(config);
 
         for (java.util.Map<String, Object> colMap : columns) {
@@ -463,6 +472,9 @@ System.out.println("[INFO] Report Page Visited "+getTime());
             col.setDataType(colMap.get("dataType").toString());
             col.setColumnPosition(Integer.parseInt(colMap.get("columnPosition").toString()));
             col.setSalaryType(colMap.get("salaryType") != null ? colMap.get("salaryType").toString() : null);
+            col.setFileType(colMap.get("fileType") != null ? colMap.get("fileType").toString() : null);
+            col.setParse(colMap.get("parse") != null ? Boolean.parseBoolean(colMap.get("parse").toString()) : true);
+            col.setIsKey(colMap.get("isKey") != null ? Boolean.parseBoolean(colMap.get("isKey").toString()) : false);
             configColRepo.save(col);
         }
 
@@ -481,6 +493,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
         res.put("headerCount", config.getHeaderCount());
         res.put("trailerCount", config.getTrailerCount());
         res.put("totalPayableColumn", config.getTotalPayableColumn());
+        res.put("overtimeTotalAmountColumn", config.getOvertimeTotalAmountColumn());
         List<ReportConfigurationColumn> cols = configColRepo.findByConfigId(id);
         res.put("columns", cols);
         return res;
