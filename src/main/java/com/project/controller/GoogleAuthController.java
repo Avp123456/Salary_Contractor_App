@@ -46,7 +46,7 @@ public class GoogleAuthController {
 
         // CONTRACTOR
         if ("CONTRACTOR".equals(role)) {
-            Contractor contractor = contractorRepository.findByEmail(email);
+            Contractor contractor = contractorRepository.findFirstByEmailIgnoreCase(email);
             if (contractor == null) {
                 contractor = new Contractor();
                 contractor.setName(name);
@@ -76,13 +76,23 @@ public class GoogleAuthController {
         }
 
         if (session.getAttribute("loggedInContractor") != null) {
+            session.setAttribute("SPRING_SECURITY_CONTEXT", org.springframework.security.core.context.SecurityContextHolder.getContext());
             return "redirect:/contractor/dashboard";
         }
 
         if (session.getAttribute("loggedInEmployee") != null) {
+            session.setAttribute("SPRING_SECURITY_CONTEXT", org.springframework.security.core.context.SecurityContextHolder.getContext());
             return "redirect:/employee/dashboard";
         }
 
-        return "redirect:/contractor/login";
+        return "redirect:/contractor/login?reason=google_null_session";
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
+    @org.springframework.web.bind.annotation.ResponseBody
+    public String handleException(Exception e) {
+        java.io.StringWriter sw = new java.io.StringWriter();
+        e.printStackTrace(new java.io.PrintWriter(sw));
+        return "Google Login Error: " + e.getMessage() + "\n\n" + sw.toString();
     }
 }

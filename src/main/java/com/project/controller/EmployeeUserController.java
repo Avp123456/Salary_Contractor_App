@@ -41,13 +41,19 @@ public class EmployeeUserController {
     }
 
     private UploadedFileColumns findIdColumn(List<UploadedFileColumns> cols) {
-        // Prioritize more specific names to avoid matching Contractor ID etc.
         List<UploadedFileColumns> filtered = cols.stream()
                 .filter(c -> c.isParse() != null && c.isParse())
                 .collect(Collectors.toList());
 
-        // Level 1: Very specific
+        // 1. Priority: Check for explicit Key column
         UploadedFileColumns specific = filtered.stream()
+                .filter(c -> c.getIsKey() != null && c.getIsKey())
+                .findFirst()
+                .orElse(null);
+        if (specific != null) return specific;
+
+        // Level 1: Very specific
+        specific = filtered.stream()
                 .filter(c -> {
                     String name = c.getColumnName().toUpperCase();
                     return (name.contains("EMP") || name.contains("EMPLOYEE")) && (name.contains("ID") || name.contains("CODE"));
@@ -136,24 +142,22 @@ public class EmployeeUserController {
                         java.lang.reflect.Method mId = UploadedFileData.class.getMethod(idGetter);
                         Object idVal = mId.invoke(row);
                         if (idVal != null && employee.getEmpCode().equalsIgnoreCase(idVal.toString().trim())) {
-                            if (row.getPayslipGenerated() != null && row.getPayslipGenerated()) {
-                                java.lang.reflect.Method mSal = UploadedFileData.class.getMethod(salaryGetter);
-                                Double amount = parseAmount(mSal.invoke(row), salaryCol.getActualColumn());
+                            java.lang.reflect.Method mSal = UploadedFileData.class.getMethod(salaryGetter);
+                            Double amount = parseAmount(mSal.invoke(row), salaryCol.getActualColumn());
 
-                                Map<String, Object> p = new HashMap<>();
-                                p.put("id", row.getId());
-                                p.put("amount", amount);
-                                p.put("uploadDate", file.getUploadDate());
-                                
-                                String fileName = file.getFileName();
-                                String extractedMonthYear = extractMonthYearFromFileName(fileName);
-                                if (extractedMonthYear == null) {
-                                    extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate());
-                                }
-                                p.put("displayName", "Payslip for " + extractedMonthYear);
-                                p.put("fileName", fileName); // Keep original for reference if needed
-                                payslips.add(p);
+                            Map<String, Object> p = new HashMap<>();
+                            p.put("id", row.getId());
+                            p.put("amount", amount);
+                            p.put("uploadDate", file.getUploadDate());
+                            
+                            String fileName = file.getFileName();
+                            String extractedMonthYear = extractMonthYearFromFileName(fileName);
+                            if (extractedMonthYear == null) {
+                                extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate());
                             }
+                            p.put("displayName", "Payslip for " + extractedMonthYear);
+                            p.put("fileName", fileName); // Keep original for reference if needed
+                            payslips.add(p);
                         }
                     } catch (Exception e) {}
                 }
@@ -171,7 +175,7 @@ public class EmployeeUserController {
         if (employee == null) return "redirect:/employee/login";
 
         UploadedFileData data = dataRepo.findById(id).orElse(null);
-        if (data == null || data.getPayslipGenerated() == null || !data.getPayslipGenerated()) return "redirect:/employee/dashboard";
+        if (data == null) return "redirect:/employee/dashboard";
 
         // Security check: Ensure this data belongs to the logged in employee
         UploadedFileColumns idCol = findIdColumn(columnRepo.findByFileId(data.getFileId()));
@@ -199,13 +203,15 @@ public class EmployeeUserController {
         Double totalAmount = 0.0;
         Double totalEarnings = 0.0;
         Double totalDeductions = 0.0;
+        Double totalPayableFromColumn = null;
 
         List<Map<String, Object>> components = new ArrayList<>();
 
         for (UploadedFileColumns col : columns) {
             if (col.isParse() != null && col.isParse()) {
                 String colName = col.getColumnName().toUpperCase();
-                boolean isId = colName.contains("ID") || colName.contains("CODE") || colName.contains("EMP");
+                UploadedFileColumns idColLocal = findIdColumn(columns);
+                boolean isId = (idColLocal != null && col.getId().equals(idColLocal.getId()));
                 boolean isName = colName.contains("NAME");
                 if (isId || isName) continue;
 
@@ -235,36 +241,115 @@ public class EmployeeUserController {
                     comp.put("isString", true);
                 }
 
-                boolean isTotal = (file.getTotalPayableColumn() != null && col.getColumnPosition() == file.getTotalPayableColumn());
+                boolean isTotal = false;
+                if (file.getTotalPayableColumn() != null && file.getTotalPayableColumn() > 0) {
+                    isTotal = (col.getColumnPosition() == file.getTotalPayableColumn());
+                } else {
+                    isTotal = colName.contains("TOTAL") || colName.contains("PAYABLE") || colName.contains("NET") || colName.contains("AMOUNT");
+                }
+
                 if (isTotal) {
                     comp.put("type", "Total");
-                    if (isNumber) totalAmount = valNum;
+                    totalPayableFromColumn = valNum;
                 } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
                     comp.put("type", "Deductions");
-                    if (isNumber) totalDeductions += valNum;
+                    if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
                 } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
                     comp.put("type", "Earnings");
-                    if (isNumber) totalEarnings += valNum;
-                } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF")) {
+                    if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
+                } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF") || colName.contains("LWF") || colName.contains("PTAX")) {
                     comp.put("type", "Deductions");
-                    if (isNumber) totalDeductions += valNum;
+                    if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
                 } else {
                     comp.put("type", "Earnings");
-                    if (isNumber) totalEarnings += valNum;
+                    if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
                 }
                 components.add(comp);
             }
         }
 
+        if (totalPayableFromColumn != null) {
+            totalAmount = totalPayableFromColumn;
+        } else {
+            totalAmount = totalEarnings - totalDeductions;
+        }
+
         model.addAttribute("contractorName", employee.getContractor().getName());
         model.addAttribute("employeeName", employeeName);
         model.addAttribute("employeeCode", employeeCode);
-        model.addAttribute("monthYearUi", java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate()));
+        String fileName = file.getFileName();
+        String extractedMonthYear = extractMonthYearFromFileName(fileName);
+        if (extractedMonthYear == null) {
+            extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM yyyy").format(file.getUploadDate());
+        }
+        model.addAttribute("monthYearUi", extractedMonthYear);
+        
+        String shortMonthYear = extractedMonthYear.replaceAll("[-_\\s]+", "");
+        if (shortMonthYear.length() >= 7) {
+            shortMonthYear = shortMonthYear.substring(0, 1).toUpperCase() + shortMonthYear.substring(1, 3).toLowerCase() + shortMonthYear.substring(shortMonthYear.length() - 4);
+        }
+        model.addAttribute("monthYear", shortMonthYear);
         model.addAttribute("components", components);
         model.addAttribute("totalAmount", totalAmount);
         model.addAttribute("totalEarnings", totalEarnings);
         model.addAttribute("totalDeductions", totalDeductions);
 
         return "employee/view-payslip";
+    }
+
+    @GetMapping("/profile")
+    public String profile(Model model, HttpSession session) {
+        Employee employee = getLoggedInEmployee(session);
+        if (employee == null) return "redirect:/employee/login";
+        model.addAttribute("employee", employee);
+        return "employee/profile";
+    }
+
+    @PostMapping("/update-profile")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> updateProfile(@RequestParam String name, @RequestParam String mobile, HttpSession session) {
+        Employee employee = getLoggedInEmployee(session);
+        if (employee == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
+        
+        Employee dbEmp = employeeService.getById(employee.getEmployeeId());
+        if (dbEmp != null) {
+            dbEmp.setName(name);
+            dbEmp.setMobileNo(mobile);
+            employeeService.save(dbEmp);
+            session.setAttribute("loggedInEmployee", dbEmp);
+        }
+        return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status", "success", "message", "Profile updated successfully"));
+    }
+
+    @GetMapping("/change-password")
+    public String changePasswordPage(Model model, HttpSession session) {
+        Employee employee = getLoggedInEmployee(session);
+        if (employee == null) return "redirect:/employee/login";
+        model.addAttribute("employee", employee);
+        return "employee/change-password";
+    }
+
+    @PostMapping("/update-password")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
+        Employee employee = getLoggedInEmployee(session);
+        if (employee == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
+
+        Employee dbEmp = employeeService.getById(employee.getEmployeeId());
+        if (dbEmp == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
+
+        if (!dbEmp.getPassword().equals(currentPassword)) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "Current password is incorrect"));
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "New passwords do not match"));
+        }
+
+        dbEmp.setPassword(newPassword);
+        dbEmp.setPasswordChanged(true);
+        employeeService.save(dbEmp);
+        session.setAttribute("loggedInEmployee", dbEmp);
+
+        return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status", "success", "message", "Password updated successfully", "redirect", "/employee/dashboard"));
     }
 }

@@ -22,13 +22,21 @@ public class SessionInterceptor implements HandlerInterceptor {
         // Check if the user is trying to access protected contractor or employee routes
         if (path.startsWith("/contractor/")) {
             if (session == null || session.getAttribute("loggedInContractor") == null) {
-                response.sendRedirect("/contractor/login?error=unauthorized");
+                response.sendRedirect("/contractor/login?reason=intercept_null_contractor");
                 return false;
             }
         } else if (path.startsWith("/employee/")) {
             if (session == null || session.getAttribute("loggedInEmployee") == null) {
                 response.sendRedirect("/employee/login?error=unauthorized");
                 return false;
+            }
+            
+            if (!path.equals("/employee/change-password") && !path.equals("/employee/update-password")) {
+                com.project.entity.Employee emp = (com.project.entity.Employee) session.getAttribute("loggedInEmployee");
+                if (emp.getPasswordChanged() == null || !emp.getPasswordChanged()) {
+                    response.sendRedirect("/employee/change-password");
+                    return false;
+                }
             }
         }
 

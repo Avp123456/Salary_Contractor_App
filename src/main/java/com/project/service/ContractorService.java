@@ -17,7 +17,7 @@ public class ContractorService {
     }
 
     public Contractor findByEmail(String email) {
-        return repo.findByEmail(email);
+        return repo.findFirstByEmailIgnoreCase(email);
     }
 
    

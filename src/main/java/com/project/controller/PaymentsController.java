@@ -118,6 +118,12 @@ public class PaymentsController {
 
             // Find ID and Salary columns
             UploadedFileColumns idCol = findIdColumn(cols);
+            
+            UploadedFileColumns nameCol = cols.stream()
+                .filter(c -> c.isParse() != null && c.isParse())
+                .filter(c -> c.getColumnName() != null && c.getColumnName().toUpperCase().contains("NAME"))
+                .findFirst()
+                .orElse(null);
 
             UploadedFiles file = fileRepo.findById(fileId).orElse(null);
             UploadedFileColumns salaryCol = null;
@@ -142,6 +148,11 @@ public class PaymentsController {
                 String idGetter = "get" + idCol.getActualColumn().substring(0, 1).toUpperCase() + idCol.getActualColumn().substring(1);
                 String salaryGetter = "get" + salaryCol.getActualColumn().substring(0, 1).toUpperCase() + salaryCol.getActualColumn().substring(1);
 
+                String extractedMonthYear = extractMonthYearFromFileName(file.getFileName());
+                if (extractedMonthYear == null) {
+                    extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate());
+                }
+
                 for (UploadedFileData row : fileRows) {
                     try {
                         java.lang.reflect.Method mId = UploadedFileData.class.getMethod(idGetter);
@@ -158,12 +169,24 @@ public class PaymentsController {
                             java.util.Map<String, Object> p = new java.util.HashMap<>();
                             p.put("id", row.getId()); // Store the data ID
                             p.put("empCode", empIdInFile);
+                            p.put("monthYear", extractedMonthYear);
+                            p.put("contractorName", contractor.getName());
+                            
+                            String empNameInFile = "";
+                            if (nameCol != null) {
+                                try {
+                                    String nameGetter = "get" + nameCol.getActualColumn().substring(0, 1).toUpperCase() + nameCol.getActualColumn().substring(1);
+                                    java.lang.reflect.Method mName = UploadedFileData.class.getMethod(nameGetter);
+                                    Object nameVal = mName.invoke(row);
+                                    empNameInFile = nameVal != null ? nameVal.toString().trim() : "";
+                                } catch (Exception e) {}
+                            }
                             
                             if (match != null) {
                                 p.put("name", match.getName());
                                 p.put("registered", true);
                             } else {
-                                p.put("name", "Not Registered");
+                                p.put("name", !empNameInFile.isEmpty() ? empNameInFile : "Not Registered");
                                 p.put("registered", false);
                             }
                             
@@ -181,6 +204,23 @@ public class PaymentsController {
                 }
             }
         }
+
+        paymentList.sort((p1, p2) -> {
+            Boolean r1 = (Boolean) p1.get("registered");
+            Boolean r2 = (Boolean) p2.get("registered");
+            if (r1 == null) r1 = false;
+            if (r2 == null) r2 = false;
+            
+            if (!r1.equals(r2)) {
+                return r1 ? -1 : 1; // true comes first
+            }
+            
+            String n1 = (String) p1.get("name");
+            String n2 = (String) p2.get("name");
+            if (n1 == null) n1 = "";
+            if (n2 == null) n2 = "";
+            return n1.compareToIgnoreCase(n2);
+        });
 
         model.addAttribute("payments", paymentList);
 System.out.println("[INFO] Payments Page Visited "+getTime());
@@ -332,6 +372,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
         Double totalAmount = 0.0;
         Double totalEarnings = 0.0;
         Double totalDeductions = 0.0;
+        Double totalPayableFromColumn = null;
 
         List<java.util.Map<String, Object>> components = new java.util.ArrayList<>();
 
@@ -379,14 +420,14 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
 
                     if (isTotal) {
                         comp.put("type", "Total");
-                        if (isNumber) totalAmount = valNum;
+                        totalPayableFromColumn = valNum;
                     } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
                         comp.put("type", "Deductions");
                         if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
                     } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
                         comp.put("type", "Earnings");
                         if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
-                    } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF")) {
+                    } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF") || colName.contains("LWF") || colName.contains("PTAX")) {
                         comp.put("type", "Deductions");
                         if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
                     } else {
@@ -396,6 +437,12 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
                     components.add(comp);
                 }
             }
+        }
+
+        if (totalPayableFromColumn != null) {
+            totalAmount = totalPayableFromColumn;
+        } else {
+            totalAmount = totalEarnings - totalDeductions;
         }
 
         if (employeeName.isEmpty() && !employeeCode.isEmpty()) {

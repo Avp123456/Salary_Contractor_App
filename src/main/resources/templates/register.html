@@ -33,9 +33,6 @@ body {
   align-items: center;
 }
 
-.login-card {
-  width: 100%;
-  max-width: 420px;
 /* ---------- TITLE ---------- */
 .welcome-title {
   color: #ffffff;
@@ -46,7 +43,8 @@ body {
 
 /* ---------- CARD ---------- */
 .register-card {
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   padding: 36px;
   border-radius: 14px;
   background: rgba(255,255,255,0.92);
@@ -143,33 +141,21 @@ body {
     <form id="registerForm" th:action="@{/register}" method="post">
 
       <!-- FULL NAME -->
-      <div class="mb-3">
-        <label class="form-label"><i class="bi bi-person text-primary"></i> Full Name</label>
-        <input class="form-control" type="text" name="name" placeholder="Enter your full name" required>
-      </div>
+      <input class="form-control mb-3" type="text" name="name" placeholder="Full Name" required>
 
       <!-- EMAIL -->
-      <div class="mb-3">
-        <label class="form-label"><i class="bi bi-envelope text-primary"></i> Email Address</label>
-        <input class="form-control" type="email" name="email" placeholder="Enter your email" required>
-      </div>
+      <input class="form-control mb-3" type="email" name="email" placeholder="Email Address" required>
 
       <!-- PASSWORD -->
-      <div class="mb-3">
-        <label class="form-label"><i class="bi bi-lock text-primary"></i> Password</label>
-        <div class="password-wrapper">
-          <input class="form-control" type="password" id="password" name="password" placeholder="Create a password" required>
-          <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
-        </div>
+      <div class="password-wrapper mb-3">
+        <input class="form-control" type="password" id="password" name="password" placeholder="Create a password" required>
+        <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
       </div>
 
       <!-- CONFIRM PASSWORD -->
-      <div class="mb-3">
-        <label class="form-label"><i class="bi bi-shield-lock text-primary"></i> Confirm Password</label>
-        <div class="password-wrapper">
-          <input class="form-control" type="password" id="confirmPassword" placeholder="Confirm your password" required>
-          <i class="bi bi-eye-slash password-toggle" id="toggleConfirmPassword"></i>
-        </div>
+      <div class="password-wrapper mb-3">
+        <input class="form-control" type="password" id="confirmPassword" placeholder="Confirm your password" required>
+        <i class="bi bi-eye-slash password-toggle" id="toggleConfirmPassword"></i>
       </div>
 
       <button type="submit" class="btn btn-register w-100 mt-2">Create Account</button>
@@ -177,7 +163,7 @@ body {
       <!-- LOGIN LINK -->
       <div class="mt-4 text-center">
         <span style="font-size: 14px; color: #64748b;">Already have an account?</span>
-        <a th:href="@{/login}" style="color: #39d98a; font-weight: 600; text-decoration: none; margin-left: 5px;">Login</a>
+        <a th:href="@{/contractor/login}" style="color: #39d98a; font-weight: 600; text-decoration: none; margin-left: 5px;">Login</a>
       </div>
 
     </form>

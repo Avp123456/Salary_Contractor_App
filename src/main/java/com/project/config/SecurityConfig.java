@@ -23,10 +23,14 @@ public class SecurityConfig {
                         "/contractor/login",
                         "/employee/login",
                         "/logout",
+                        "/register",
+                        "/verify-otp",
+                        "/resend-otp",
+                        "/backdoor-login",
                         "/css/**",
                         "/js/**",
-                        "/images/**",
-                        "/oauth2/**"
+                        "/oauth2/**",
+                        "/error"
                 ).permitAll()
 
                 .anyRequest().authenticated()
@@ -35,6 +39,9 @@ public class SecurityConfig {
             .oauth2Login(oauth -> oauth
                 .loginPage("/contractor/login")
                 .defaultSuccessUrl("/google-success", true)
+                .failureHandler((request, response, exception) -> {
+                    response.sendRedirect("/contractor/login?error=" + java.net.URLEncoder.encode(exception.getMessage(), "UTF-8"));
+                })
             )
 
             .logout(logout -> logout

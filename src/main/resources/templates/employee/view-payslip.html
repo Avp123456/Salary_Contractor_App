@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Payslip - [[${employeeName}]]</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 20px; margin: 0; color: #000; }
         .action-buttons { text-align: center; margin-bottom: 20px; }
@@ -160,8 +161,8 @@
         function downloadPDF() {
             const element = document.getElementById('payslipContent');
             const rawEmpName = '[[${employeeName}]]';
-            const cleanEmpName = rawEmpName.replace(/\s+/g, '_');
-            const pdfFileName = '[[${employeeCode}]]_' + cleanEmpName + '_[[${monthYear}]].pdf';
+            const cleanEmpName = rawEmpName.replace(/\s+/g, '');
+            const pdfFileName = '[[${employeeCode}]]_' + cleanEmpName + '_[[${monthYear}]]_Payslip.pdf';
 
             const opt = {
                 margin:       [10, 10, 10, 10],
@@ -174,9 +175,65 @@
         }
 
         function shareWhatsApp() {
-            const url = window.location.href;
-            const text = encodeURIComponent(`Hello [[${employeeName}]],\n\nYour salary payslip has been generated.\nYou can view and download it here: ${url}\n\nRegards,\n[[${contractorName}]]`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
+            const element = document.getElementById('payslipContent');
+            const rawEmpName = '[[${employeeName}]]';
+            const cleanEmpName = rawEmpName.replace(/\s+/g, '');
+            const pdfFileName = '[[${employeeCode}]]_' + cleanEmpName + '_[[${monthYear}]]_Payslip.pdf';
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     pdfFileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            const btn = document.querySelector('.btn-whatsapp');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Preparing...';
+            btn.disabled = true;
+
+            html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
+
+                if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: pdfFileName
+                    }).catch(err => console.error("Error sharing PDF:", err));
+                } else {
+                    // Desktop Flow
+                    Swal.fire({
+                        title: 'Share via WhatsApp Web',
+                        html: '<p style="font-size: 0.95rem; color: #475569;">WhatsApp Web does not support automatic file attachments.</p><p style="font-size: 0.95rem; color: #475569;">Click below to download your secure PDF payslip and automatically open WhatsApp Web, where you can easily drag-and-drop the file to your contact.</p>',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="bi bi-download me-1"></i> Download & Open WhatsApp',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#25D366',
+                        cancelButtonColor: '#64748b',
+                        customClass: {
+                            confirmButton: 'fw-bold rounded-pill px-4',
+                            cancelButton: 'fw-bold rounded-pill px-4'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            html2pdf().set(opt).from(element).save();
+                            setTimeout(() => {
+                                window.open('https://web.whatsapp.com/', '_blank');
+                            }, 500);
+                        }
+                    });
+                }
+            }).catch(err => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                console.error("Error generating PDF:", err);
+            });
         }
     </script>
 </body>

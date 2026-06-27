@@ -197,6 +197,7 @@
         }
 
         .btn-edit { background: white; color: var(--accent-color); border: 2px solid var(--accent-color); }
+        .btn-logout { background: white; color: #ef4444; border: 2px solid #ef4444; text-decoration: none; }
         .btn-save { background: var(--primary-gradient); color: white; display: none; }
         .btn-cancel { background: #f1f5f9; color: #64748b; display: none; }
 
@@ -251,6 +252,9 @@
                             <button type="button" class="btn-modern btn-edit" id="editBtn">
                                 <i class="bi bi-pencil-fill"></i> Edit Profile
                             </button>
+                            <a th:href="@{/logout}" class="btn-modern btn-logout" id="logoutBtn">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
                             <button type="button" class="btn-modern btn-cancel" id="cancelBtn">
                                 Cancel
                             </button>
@@ -279,6 +283,8 @@
             nameInput.focus();
             
             editBtn.style.display = 'none';
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.style.display = 'none';
             cancelBtn.style.display = 'flex';
             saveBtn.style.display = 'flex';
         });

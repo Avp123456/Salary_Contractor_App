@@ -87,7 +87,10 @@
                                 
                                 <button class="btn btn-primary btn-sm px-3 ms-1" 
                                         style="background-color: #0f172a; border: none; font-size: 13px;"
-                                        th:onclick="'showPayslipOptions(' + ${p.id} + ')'"
+                                        th:data-id="${p.id}"
+                                        th:data-month-year="${p.monthYear}"
+                                        th:data-contractor="${p.contractorName}"
+                                        onclick="showPayslipOptions(this)"
                                         th:disabled="${p.registered == false}">View Slip</button>
                             </td>
                         </tr>
@@ -128,7 +131,14 @@
     <script>
         let currentDataId = null;
         let isEditMode = false;
-        const modal = new bootstrap.Modal(document.getElementById('salaryModal'));
+        let modalInstance = null;
+
+        function getModal() {
+            if (!modalInstance) {
+                modalInstance = new bootstrap.Modal(document.getElementById('salaryModal'));
+            }
+            return modalInstance;
+        }
 
         async function openSalaryModal(id) {
             currentDataId = id;
@@ -139,7 +149,7 @@
             const container = document.getElementById('salaryFieldsContainer');
             container.innerHTML = '<div class="text-center py-4">Loading structure...</div>';
             
-            modal.show();
+            getModal().show();
             
             try {
                 const response = await fetch(`/contractor/get-payment-details?id=${id}`);
@@ -236,7 +246,7 @@
                         amountCell.innerText = '₹' + newTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
                     }
 
-                    modal.hide();
+                    getModal().hide();
 
                     Swal.fire({
                         title: 'Updated!',
@@ -264,7 +274,22 @@
             }
         }
 
-        function showPayslipOptions(id) {
+        function showPayslipOptions(btn) {
+            const id = btn.getAttribute('data-id');
+            const monthYear = btn.getAttribute('data-month-year');
+            const contractorName = btn.getAttribute('data-contractor');
+
+            const row = document.getElementById(`row-${id}`);
+            let empName = 'Employee';
+            if (row && row.cells[2]) {
+                const nameSpan = row.cells[2].querySelector('span');
+                if (nameSpan) empName = nameSpan.innerText.trim();
+            }
+            // Escape single quotes for HTML injection
+            const safeName = empName.replace(/'/g, "\\'");
+            const safeMonth = monthYear.replace(/'/g, "\\'");
+            const safeContractor = contractorName.replace(/'/g, "\\'");
+
             Swal.fire({
                 title: 'Payslip Ready!',
                 html: `
@@ -275,10 +300,10 @@
                         <a href="/contractor/payslip/${id}" target="_blank" class="btn btn-primary" style="background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; text-decoration: none;">
                             View & Download PDF
                         </a>
-                        <button onclick="shareWhatsAppDirect(${id})" class="btn btn-success" style="background: #25D366; color: white; border: none; padding: 10px; border-radius: 8px;">
+                        <button onclick="shareWhatsAppDirect(${id}, '${safeName}', '${safeMonth}', '${safeContractor}')" class="btn btn-success" style="background: #25D366; color: white; border: none; padding: 10px; border-radius: 8px;">
                             Share via WhatsApp
                         </button>
-                        <button onclick="shareEmailDirect(${id})" class="btn btn-danger" style="background: #ea4335; color: white; border: none; padding: 10px; border-radius: 8px;">
+                        <button onclick="shareEmailDirect(${id}, '${safeName}', '${safeMonth}', '${safeContractor}')" class="btn btn-danger" style="background: #ea4335; color: white; border: none; padding: 10px; border-radius: 8px;">
                             Share via Email
                         </button>
                     </div>
@@ -290,15 +315,16 @@
             });
         }
 
-        function shareWhatsAppDirect(id) {
+        function shareWhatsAppDirect(id, name, monthYear, contractorName) {
             const url = window.location.origin + `/contractor/payslip/${id}`;
-            const text = encodeURIComponent(`Hello,\n\nYour salary payslip has been generated.\nYou can securely view and download your PDF payslip here:\n${url}`);
+            const text = encodeURIComponent(`Dear ${name},\n\nPlease find your generated payslip for ${monthYear}. You can securely view and download your detailed PDF payslip using the link below:\n\n${url}\n\nBest regards, ${contractorName}`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         }
 
-        function shareEmailDirect(id) {
+        function shareEmailDirect(id, name, monthYear, contractorName) {
             const url = window.location.origin + `/contractor/payslip/${id}`;
-            window.location.href = `mailto:?subject=Your Salary Payslip&body=Hello,%0D%0A%0D%0AYour salary payslip has been generated.%0D%0AYou can securely view and download your PDF payslip here:%0D%0A${url}`;
+            const body = encodeURIComponent(`Dear ${name},\n\nPlease find your generated payslip for ${monthYear}. You can securely view and download your detailed PDF payslip using the link below:\n\n${url}\n\nBest regards, ${contractorName}`);
+            window.location.href = `mailto:?subject=Your Salary Payslip&body=${body}`;
         }
     </script>
 </body>

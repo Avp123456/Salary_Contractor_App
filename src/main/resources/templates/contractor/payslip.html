@@ -182,7 +182,7 @@
 
         function shareWhatsApp() {
             const url = window.location.href;
-            const text = encodeURIComponent(`Hello [[${employeeName}]],\n\nYour salary payslip has been generated.\nYou can view and download it here: ${url}\n\nRegards,\n[[${contractorName}]]`);
+            const text = encodeURIComponent(`Dear [[${employeeName}]],\n\nPlease find your generated payslip for [[${monthYearUi}]].\nYou can securely view and download your detailed PDF payslip using the link below:\n\n${url}\n\nBest regards,\n[[${contractorName}]]`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         }
     </script>
