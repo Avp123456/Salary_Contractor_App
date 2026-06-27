@@ -30,7 +30,7 @@
             }
         }
 
-        .navbar { background: white; border-bottom: 1px solid #e2e8f0; padding: 15px 0; position: relative; z-index: 10; }
+        .navbar { background: white; border-bottom: 1px solid #e2e8f0; padding: 15px 0; position: sticky; top: 0; z-index: 1020; }
         .navbar-brand { font-weight: 700; color: #2563eb !important; }
 
         .main-wrapper {
@@ -385,5 +385,7 @@
             });
         });
     </script>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
+

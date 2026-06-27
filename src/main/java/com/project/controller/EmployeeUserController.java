@@ -139,6 +139,16 @@ public class EmployeeUserController {
                         .max(java.util.Comparator.comparingInt(UploadedFileColumns::getColumnPosition))
                         .orElse(null);
             }
+            
+            UploadedFileColumns overtimeCol = null;
+            if (file != null && file.getOvertimeTotalAmountColumn() != null && file.getOvertimeTotalAmountColumn() > 0) {
+                final int ovtPos = file.getOvertimeTotalAmountColumn();
+                overtimeCol = cols.stream()
+                    .filter(c -> c.isParse() != null && c.isParse())
+                    .filter(c -> c.getColumnPosition() == ovtPos)
+                    .findFirst()
+                    .orElse(null);
+            }
 
             if (idCol != null && salaryCol != null) {
                 String idGetter = "get" + idCol.getActualColumn().substring(0, 1).toUpperCase() + idCol.getActualColumn().substring(1);
@@ -151,6 +161,12 @@ public class EmployeeUserController {
                         if (idVal != null && employee.getEmpCode().equalsIgnoreCase(idVal.toString().trim())) {
                             java.lang.reflect.Method mSal = UploadedFileData.class.getMethod(salaryGetter);
                             Double amount = parseAmount(mSal.invoke(row), salaryCol.getActualColumn());
+                            
+                            if (overtimeCol != null) {
+                                String ovtGetter = "get" + overtimeCol.getActualColumn().substring(0, 1).toUpperCase() + overtimeCol.getActualColumn().substring(1);
+                                java.lang.reflect.Method mOvt = UploadedFileData.class.getMethod(ovtGetter);
+                                amount += parseAmount(mOvt.invoke(row), overtimeCol.getActualColumn());
+                            }
 
                             Map<String, Object> p = new HashMap<>();
                             p.put("id", row.getId());
@@ -211,6 +227,7 @@ public class EmployeeUserController {
         Double totalEarnings = 0.0;
         Double totalDeductions = 0.0;
         Double totalPayableFromColumn = null;
+        Double overtimeAmount = null;
 
         List<Map<String, Object>> components = new ArrayList<>();
 
@@ -233,7 +250,7 @@ public class EmployeeUserController {
                     valStr = result != null ? result.toString().trim() : "";
                     
                     // If it's a numeric column OR it successfully parsed as a non-zero number, treat as number
-                    if (col.getActualColumn().startsWith("num") || valNum != 0.0) {
+                    if (col.getActualColumn().startsWith("num") || valNum != 0.0 || "E".equalsIgnoreCase(col.getSalaryType()) || "D".equalsIgnoreCase(col.getSalaryType())) {
                         isNumber = true;
                     }
                 } catch (Exception e) {}
@@ -249,21 +266,33 @@ public class EmployeeUserController {
                 }
 
                 boolean isTotal = false;
+                boolean isOvertime = false;
                 if (file.getTotalPayableColumn() != null && file.getTotalPayableColumn() > 0) {
                     isTotal = (col.getColumnPosition() == file.getTotalPayableColumn());
                 } else {
                     isTotal = colName.contains("TOTAL") || colName.contains("PAYABLE") || colName.contains("NET") || colName.contains("AMOUNT");
                 }
+                
+                if (file.getOvertimeTotalAmountColumn() != null && file.getOvertimeTotalAmountColumn() > 0) {
+                    isOvertime = (col.getColumnPosition() == file.getOvertimeTotalAmountColumn());
+                }
 
-                if (isTotal) {
-                    comp.put("type", "Total");
-                    totalPayableFromColumn = valNum;
+                if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                    comp.put("type", "Earnings");
+                    if (isNumber) totalEarnings += valNum;
+                    if (isTotal) totalPayableFromColumn = valNum;
+                    if (isOvertime) overtimeAmount = valNum;
                 } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
                     comp.put("type", "Deductions");
-                    if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
-                } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                    if (isNumber) totalDeductions += valNum;
+                    if (isTotal) totalPayableFromColumn = valNum;
+                } else if (isTotal) {
+                    comp.put("type", "Total");
+                    totalPayableFromColumn = valNum;
+                } else if (isOvertime) {
                     comp.put("type", "Earnings");
-                    if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
+                    overtimeAmount = valNum;
+                    if (isNumber) totalEarnings += valNum;
                 } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF") || colName.contains("LWF") || colName.contains("PTAX")) {
                     comp.put("type", "Deductions");
                     if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
@@ -275,11 +304,7 @@ public class EmployeeUserController {
             }
         }
 
-        if (totalPayableFromColumn != null) {
-            totalAmount = totalPayableFromColumn;
-        } else {
-            totalAmount = totalEarnings - totalDeductions;
-        }
+        totalAmount = totalEarnings - totalDeductions;
 
         model.addAttribute("contractorName", employee.getContractor().getName());
         model.addAttribute("employeeName", employeeName);
@@ -338,16 +363,19 @@ public class EmployeeUserController {
 
     @PostMapping("/update-password")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
+    public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam(required = false) String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
 
         Employee dbEmp = employeeService.getById(employee.getEmployeeId());
         if (dbEmp == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
 
-        if (!dbEmp.getPassword().equals(currentPassword)) {
-            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "Current password is incorrect"));
+        if (Boolean.TRUE.equals(dbEmp.getPasswordChanged())) {
+            if (currentPassword == null || !dbEmp.getPassword().equals(currentPassword)) {
+                return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "Current password is incorrect"));
+            }
         }
+        
         if (!newPassword.equals(confirmPassword)) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "New passwords do not match"));
         }

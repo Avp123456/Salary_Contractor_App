@@ -143,6 +143,16 @@ public class PaymentsController {
                     .max(java.util.Comparator.comparingInt(UploadedFileColumns::getColumnPosition))
                     .orElse(null);
             }
+            
+            UploadedFileColumns overtimeCol = null;
+            if (file != null && file.getOvertimeTotalAmountColumn() != null && file.getOvertimeTotalAmountColumn() > 0) {
+                final int ovtPos = file.getOvertimeTotalAmountColumn();
+                overtimeCol = cols.stream()
+                    .filter(c -> c.isParse() != null && c.isParse())
+                    .filter(c -> c.getColumnPosition() == ovtPos)
+                    .findFirst()
+                    .orElse(null);
+            }
 
             if (idCol != null && salaryCol != null) {
                 String idGetter = "get" + idCol.getActualColumn().substring(0, 1).toUpperCase() + idCol.getActualColumn().substring(1);
@@ -192,6 +202,13 @@ public class PaymentsController {
                             
                             java.lang.reflect.Method mSal = UploadedFileData.class.getMethod(salaryGetter);
                             Double amount = parseAmount(mSal.invoke(row));
+                            
+                            if (overtimeCol != null) {
+                                String ovtGetter = "get" + overtimeCol.getActualColumn().substring(0, 1).toUpperCase() + overtimeCol.getActualColumn().substring(1);
+                                java.lang.reflect.Method mOvt = UploadedFileData.class.getMethod(ovtGetter);
+                                amount += parseAmount(mOvt.invoke(row));
+                            }
+                            
                             p.put("amount", amount);
                             p.put("status", row.getStatus() != null ? row.getStatus() : "Pending");
                             p.put("structureViewed", row.getStructureViewed() != null ? row.getStructureViewed() : false);
@@ -373,6 +390,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
         Double totalEarnings = 0.0;
         Double totalDeductions = 0.0;
         Double totalPayableFromColumn = null;
+        Double overtimeAmount = null;
 
         List<java.util.Map<String, Object>> components = new java.util.ArrayList<>();
 
@@ -392,7 +410,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
                     Object result = m.invoke(data);
                     valNum = parseAmount(result);
                     valStr = result != null ? result.toString().trim() : "";
-                    if (col.getActualColumn().startsWith("num") || valNum != 0.0) {
+                    if (col.getActualColumn().startsWith("num") || valNum != 0.0 || "E".equalsIgnoreCase(col.getSalaryType()) || "D".equalsIgnoreCase(col.getSalaryType())) {
                         isNumber = true;
                     }
                 } catch (Exception e) {}
@@ -412,21 +430,33 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
                     }
                     
                     boolean isTotal = false;
+                    boolean isOvertime = false;
                     if (file.getTotalPayableColumn() != null && file.getTotalPayableColumn() > 0) {
                         isTotal = (col.getColumnPosition() == file.getTotalPayableColumn());
                     } else {
                         isTotal = colName.contains("TOTAL") || colName.contains("PAYABLE") || colName.contains("NET") || colName.contains("AMOUNT");
                     }
+                    
+                    if (file.getOvertimeTotalAmountColumn() != null && file.getOvertimeTotalAmountColumn() > 0) {
+                        isOvertime = (col.getColumnPosition() == file.getOvertimeTotalAmountColumn());
+                    }
 
-                    if (isTotal) {
-                        comp.put("type", "Total");
-                        totalPayableFromColumn = valNum;
+                    if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                        comp.put("type", "Earnings");
+                        if (isNumber) totalEarnings += valNum;
+                        if (isTotal) totalPayableFromColumn = valNum;
+                        if (isOvertime) overtimeAmount = valNum;
                     } else if ("D".equalsIgnoreCase(col.getSalaryType())) {
                         comp.put("type", "Deductions");
-                        if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
-                    } else if ("E".equalsIgnoreCase(col.getSalaryType())) {
+                        if (isNumber) totalDeductions += valNum;
+                        if (isTotal) totalPayableFromColumn = valNum;
+                    } else if (isTotal) {
+                        comp.put("type", "Total");
+                        totalPayableFromColumn = valNum;
+                    } else if (isOvertime) {
                         comp.put("type", "Earnings");
-                        if (isNumber && !colName.contains("TOTAL")) totalEarnings += valNum;
+                        overtimeAmount = valNum;
+                        if (isNumber) totalEarnings += valNum;
                     } else if (colName.contains("DEDUCT") || colName.contains("TDS") || colName.contains("TAX") || colName.contains("PF") || colName.contains("FINE") || colName.contains("FUND") || colName.contains("ESI") || colName.contains("LOAN") || colName.contains("PROF") || colName.contains("LWF") || colName.contains("PTAX")) {
                         comp.put("type", "Deductions");
                         if (isNumber && !colName.contains("TOTAL")) totalDeductions += valNum;
@@ -439,11 +469,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
             }
         }
 
-        if (totalPayableFromColumn != null) {
-            totalAmount = totalPayableFromColumn;
-        } else {
-            totalAmount = totalEarnings - totalDeductions;
-        }
+        totalAmount = totalEarnings - totalDeductions;
 
         if (employeeName.isEmpty() && !employeeCode.isEmpty()) {
             final String finalEmployeeCode = employeeCode;
