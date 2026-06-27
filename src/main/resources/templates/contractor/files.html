@@ -164,8 +164,7 @@
             </div>
 
             <!-- Pagination Controls -->
-            <div class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3">
-                <div class="small text-muted" id="paginationInfo">Showing 1 to 10 of 10</div>
+            <div class="d-flex justify-content-center mt-3 mb-4">
                 <nav>
                     <ul class="pagination pagination-sm mb-0" id="paginationControls">
                     </ul>
@@ -266,6 +265,51 @@
             document.getElementById('confirmDeleteBtn').setAttribute('href', url);
             deleteModal.show();
         }
+
+        // Pagination Logic
+        let currentPage = 1;
+        const recordsPerPage = 10;
+
+        function renderTable() {
+            const rows = Array.from(document.querySelectorAll('.table tbody tr:not(.no-records)'));
+            const totalRecords = rows.length;
+            const totalPages = Math.ceil(totalRecords / recordsPerPage) || 1;
+            
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const start = (currentPage - 1) * recordsPerPage;
+            const end = start + recordsPerPage;
+
+            rows.forEach((row, idx) => {
+                row.style.display = (idx >= start && idx < end) ? '' : 'none';
+            });
+
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+            
+            if (totalRecords > 0) {
+                controls.innerHTML = `
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <button class="page-link" onclick="changePage(${currentPage - 1})">Previous</button>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link text-primary fw-medium">${currentPage} / ${totalPages}</span>
+                    </li>
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <button class="page-link" onclick="changePage(${currentPage + 1})">Next</button>
+                    </li>
+                `;
+            }
+        }
+
+        function changePage(p) {
+            currentPage = p;
+            renderTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', renderTable);
     </script>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

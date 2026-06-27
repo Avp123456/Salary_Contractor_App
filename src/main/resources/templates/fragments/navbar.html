@@ -52,7 +52,7 @@
 <body>
 
 <!-- ✅ NAVBAR FRAGMENT -->
-<div th:fragment="navbar(pageTitle)">
+<div th:fragment="navbar(pageTitle)" class="sticky-top" style="z-index: 1020;">
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
@@ -85,9 +85,9 @@
     <div class="collapse navbar-collapse order-lg-2" id="navbarNav">
       <ul class="navbar-nav ms-auto gap-1">
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Dashboard' ? 'active' : ''}" href="/contractor/dashboard">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Configuration' ? 'active' : ''}" href="/contractor/configurations">Configuration</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Files' ? 'active' : ''}" href="/contractor/files">Files</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Employees' ? 'active' : ''}" href="/contractor/employees">Employees</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Files' ? 'active' : ''}" href="/contractor/files">Files</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Configuration' ? 'active' : ''}" href="/contractor/configurations">Configuration</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Salary' ? 'active' : ''}" href="/contractor/salary">Salary</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Payments' ? 'active' : ''}" href="/contractor/payments">Payments</a></li>
        

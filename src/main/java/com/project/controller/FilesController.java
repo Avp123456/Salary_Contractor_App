@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -31,6 +32,8 @@ import com.project.repository.UploadedFileDataRepository;
 import com.project.repository.UploadedFileRepository;
 import com.project.repository.ReportConfigurationRepository;
 import com.project.repository.ReportConfigurationColumnRepository;
+import com.project.repository.ReportConfigurationFileRepository;
+import com.project.entity.ReportConfigurationFile;
 import com.project.service.ExcelService;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +61,9 @@ public class FilesController {
     
     @Autowired
     private ReportConfigurationColumnRepository configColRepo;
+
+    @Autowired
+    private ReportConfigurationFileRepository configFileRepo;
 
     @Autowired
     private ExcelService excelService;
@@ -500,34 +506,43 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
     @PostMapping("/contractor/save-configuration")
     @ResponseBody
+    @Transactional
     public String saveConfiguration(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
         Long contractorId = getCurrentContractorId(session);
         Object idObj = payload.get("id");
         Long id = (idObj != null) ? Long.valueOf(idObj.toString()) : null;
         
         String name = payload.get("configName").toString();
-        int header = Integer.parseInt(payload.get("headerCount").toString());
-        int trailer = Integer.parseInt(payload.get("trailerCount").toString());
-        int totalPos = Integer.parseInt(payload.get("totalPayableColumn").toString());
-        int overtimeTotalPos = payload.get("overtimeTotalAmountColumn") != null && !payload.get("overtimeTotalAmountColumn").toString().isEmpty() ? Integer.parseInt(payload.get("overtimeTotalAmountColumn").toString()) : 0;
         List<java.util.Map<String, Object>> columns = (List<java.util.Map<String, Object>>) payload.get("columns");
+        List<java.util.Map<String, Object>> fileConfigs = (List<java.util.Map<String, Object>>) payload.get("fileConfigs");
 
         ReportConfiguration config;
         if (id != null) {
             config = configRepo.findById(id).orElse(new ReportConfiguration());
-            // Clear existing columns for update
             configColRepo.deleteByConfigId(id);
+            configFileRepo.deleteByConfigId(id);
         } else {
             config = new ReportConfiguration();
         }
 
         config.setContractorId(contractorId);
         config.setConfigName(name);
-        config.setHeaderCount(header);
-        config.setTrailerCount(trailer);
-        config.setTotalPayableColumn(totalPos);
-        config.setOvertimeTotalAmountColumn(overtimeTotalPos);
         configRepo.save(config);
+
+        if (fileConfigs != null) {
+            List<ReportConfigurationFile> filesToSave = new ArrayList<>();
+            for (java.util.Map<String, Object> fMap : fileConfigs) {
+                ReportConfigurationFile f = new ReportConfigurationFile();
+                f.setConfigId(config.getId());
+                f.setFileName(fMap.get("fileName").toString());
+                f.setHeaderCount(fMap.get("headerCount") != null ? Integer.parseInt(fMap.get("headerCount").toString()) : 0);
+                f.setTrailerCount(fMap.get("trailerCount") != null ? Integer.parseInt(fMap.get("trailerCount").toString()) : 0);
+                f.setTotalPayableColumn(fMap.get("totalPayableColumn") != null && !fMap.get("totalPayableColumn").toString().isEmpty() ? Integer.parseInt(fMap.get("totalPayableColumn").toString()) : 0);
+                f.setOvertimeTotalAmountColumn(fMap.get("overtimeTotalAmountColumn") != null && !fMap.get("overtimeTotalAmountColumn").toString().isEmpty() ? Integer.parseInt(fMap.get("overtimeTotalAmountColumn").toString()) : 0);
+                filesToSave.add(f);
+            }
+            configFileRepo.saveAll(filesToSave);
+        }
 
         List<ReportConfigurationColumn> configColsToSave = new ArrayList<>();
         for (java.util.Map<String, Object> colMap : columns) {
@@ -556,21 +571,23 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
         java.util.Map<String, Object> res = new java.util.HashMap<>();
         res.put("configName", config.getConfigName());
-        res.put("headerCount", config.getHeaderCount());
-        res.put("trailerCount", config.getTrailerCount());
-        res.put("totalPayableColumn", config.getTotalPayableColumn());
-        res.put("overtimeTotalAmountColumn", config.getOvertimeTotalAmountColumn());
+        
+        List<ReportConfigurationFile> fileConfigs = configFileRepo.findByConfigId(id);
+        res.put("fileConfigs", fileConfigs);
+        
         List<ReportConfigurationColumn> cols = configColRepo.findByConfigId(id);
         res.put("columns", cols);
         return res;
     }
 
     @GetMapping("/contractor/delete-configuration/{id}")
+    @Transactional
     public String deleteConfiguration(@PathVariable Long id, HttpSession session) {
         Long contractorId = getCurrentContractorId(session);
         ReportConfiguration config = configRepo.findById(id).orElse(null);
         if (config != null && config.getContractorId().equals(contractorId)) {
             configColRepo.deleteByConfigId(id);
+            configFileRepo.deleteByConfigId(id);
             configRepo.delete(config);
         }
         return "redirect:/contractor/configurations";
@@ -597,6 +614,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
         // Optimize: Fetch all files for contractor once
         List<UploadedFiles> allContractorFiles = fileRepo.findByContractorId(contractorId);
+        List<ReportConfigurationFile> fileConfigs = configFileRepo.findByConfigId(id);
 
         for (String fileName : fileGroups.keySet()) {
             UploadedFiles file = allContractorFiles.stream()
@@ -617,8 +635,11 @@ System.out.println("[INFO] Report Page Visited "+getTime());
                     .filter(c -> c.getIsKey() != null && c.getIsKey())
                     .collect(Collectors.toList());
                 
-                int start = config.getHeaderCount() != null ? config.getHeaderCount() : 0;
-                int end = rawData.size() - (config.getTrailerCount() != null ? config.getTrailerCount() : 0);
+                ReportConfigurationFile fConfig = fileConfigs.stream()
+                    .filter(fc -> fileName.equals(fc.getFileName())).findFirst().orElse(null);
+                
+                int start = fConfig != null && fConfig.getHeaderCount() != null ? fConfig.getHeaderCount() : 0;
+                int end = rawData.size() - (fConfig != null && fConfig.getTrailerCount() != null ? fConfig.getTrailerCount() : 0);
                 
                 Map<String, List<String>> dataMap = new HashMap<>();
                 for (int i = start; i < end && i < rawData.size(); i++) {
@@ -655,7 +676,20 @@ System.out.println("[INFO] Report Page Visited "+getTime());
         }
 
         Set<String> allKeys = new TreeSet<>();
-        for (Map<String, List<String>> map : fileDataMaps.values()) allKeys.addAll(map.keySet());
+        
+        // Find the primary file name (first file config)
+        String primaryFileName = null;
+        if (fileConfigs != null && !fileConfigs.isEmpty()) {
+            primaryFileName = fileConfigs.get(0).getFileName();
+        }
+        
+        // Only use keys from the primary file (LEFT JOIN behavior)
+        if (primaryFileName != null && fileDataMaps.containsKey(primaryFileName)) {
+            allKeys.addAll(fileDataMaps.get(primaryFileName).keySet());
+        } else if (!fileDataMaps.isEmpty()) {
+            // Fallback if no config or primary file data missing
+            allKeys.addAll(fileDataMaps.values().iterator().next().keySet());
+        }
 
         List<List<String>> combinedData = new ArrayList<>();
         for (String key : allKeys) {
@@ -691,13 +725,35 @@ System.out.println("[INFO] Report Page Visited "+getTime());
             displayCols.add(uc);
         }
 
-        if (primaryFileId != null) {
+        if (primaryFileId != null && !fileConfigs.isEmpty()) {
             UploadedFiles f = fileRepo.findById(primaryFileId).orElse(null);
+            ReportConfigurationFile pfConfig = fileConfigs.get(0); // Using the first config as fallback for the primary file
+            for (ReportConfigurationFile fc : fileConfigs) {
+                if (fc.getFileName().equals(f.getFileName())) {
+                    pfConfig = fc;
+                    break;
+                }
+            }
             if (f != null) {
-                f.setHeaderCount(config.getHeaderCount());
-                f.setTrailerCount(config.getTrailerCount());
-                f.setTotalPayableColumn(config.getTotalPayableColumn());
-                f.setOvertimeTotalAmountColumn(config.getOvertimeTotalAmountColumn());
+                int finalHeaderCount = pfConfig.getHeaderCount();
+                int finalTrailerCount = pfConfig.getTrailerCount();
+                int finalTotalPayable = 0;
+                int finalOvertimePayable = 0;
+                
+                // Since columns are merged left-to-right across files, we need to find the new positions.
+                // Wait! In combinedData, columns are just placed at their original position (e.g. 1, 2, ... 10).
+                // But if File1 has 5 columns and File2 has 5 columns, does File2's column 6 map to 6?
+                // Yes, the user inputs the position in the UI!
+                
+                for (ReportConfigurationFile fc : fileConfigs) {
+                    if (fc.getTotalPayableColumn() > 0) finalTotalPayable = fc.getTotalPayableColumn();
+                    if (fc.getOvertimeTotalAmountColumn() > 0) finalOvertimePayable = fc.getOvertimeTotalAmountColumn();
+                }
+                
+                f.setHeaderCount(finalHeaderCount);
+                f.setTrailerCount(finalTrailerCount);
+                f.setTotalPayableColumn(finalTotalPayable);
+                f.setOvertimeTotalAmountColumn(finalOvertimePayable);
                 fileRepo.save(f);
                 
                 columnRepo.deleteByConfigId(id);

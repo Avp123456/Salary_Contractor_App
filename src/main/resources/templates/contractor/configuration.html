@@ -27,6 +27,9 @@
         .ed-cell { width: 100px; }
         .parse-cell, .key-cell { width: 90px; }
         .rectangular-toast { margin-top: 70px !important; border-radius: 4px !important; font-size: 0.82rem !important; border: 1px solid #047857; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important; }
+        .error-toast-style { margin-top: 70px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; padding: 10px 20px !important; width: auto !important; max-width: none !important; min-height: auto !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
+        .error-toast-style .swal2-html-container { margin: 0 !important; padding: 0 !important; overflow: visible !important; color: white !important; }
+        .outline-danger { outline: 2px solid #ef4444 !important; outline-offset: -1px; }
     </style>
 </head>
 <body>
@@ -94,25 +97,12 @@
                         <input type="text" id="configName" class="form-control">
                     </div>
 
-                    <div class="config-row">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label class="form-label">Header Skip</label>
-                                <input type="number" id="headerCount" class="form-control form-control-sm" value="0">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Trailer Skip</label>
-                                <input type="number" id="trailerCount" class="form-control form-control-sm" value="0">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Total Payable Amount Col Pos</label>
-                                <input type="number" id="totalPayableColumn" class="form-control form-control-sm">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Overtime Total Col Pos</label>
-                                <input type="number" id="overtimeTotalAmountColumn" class="form-control form-control-sm">
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                        <h6 class="fw-bold mb-0">File Settings</h6>
+                        <button class="btn btn-outline-primary btn-sm" onclick="addNewFileConfigRow()">+ Add File Config</button>
+                    </div>
+                    <div id="fileConfigsContainer">
+                        <!-- Dynamic File Config Rows -->
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -236,14 +226,137 @@
             renderConfigTable();
         }
 
+        // File Configs Logic
+        let fileConfigsData = [];
+
+        function renderFileConfigs() {
+            const container = document.getElementById('fileConfigsContainer');
+            container.innerHTML = '';
+            
+            fileConfigsData.forEach((fc, idx) => {
+                let fileOptionsHTML = '<option value="" ' + (!fc.fileName ? 'selected' : '') + '>-- Select File --</option>';
+                if (uploadedFiles && uploadedFiles.length > 0) {
+                    uploadedFiles.forEach(f => {
+                        const isSelected = fc.fileName === f.fileName ? 'selected' : '';
+                        fileOptionsHTML += `<option value="${f.fileName}" ${isSelected}>${f.fileName}</option>`;
+                    });
+                }
+
+                const isOvertime = fc.fileType === 'OVERTIME' || (fc.overtimeTotalAmountColumn > 0 && !fc.totalPayableColumn);
+                fc.fileType = isOvertime ? 'OVERTIME' : 'REGULAR';
+
+                const row = document.createElement('div');
+                row.className = 'config-row position-relative mb-3';
+                row.innerHTML = `
+                    <button class="btn btn-sm btn-link text-danger position-absolute top-0 end-0 p-2" onclick="removeFileConfig(${idx})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/></svg>
+                    </button>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label class="form-label">Type</label>
+                            <select class="form-select form-select-sm fc-type" onchange="updateFileConfig(${idx})">
+                                <option value="REGULAR" ${!isOvertime ? 'selected' : ''}>Regular</option>
+                                <option value="OVERTIME" ${isOvertime ? 'selected' : ''}>Overtime</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">File Name</label>
+                            <select class="form-select form-select-sm fc-filename" required onchange="updateFileConfig(${idx})">
+                                ${fileOptionsHTML}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Header Skip</label>
+                            <input type="number" class="form-control form-control-sm fc-header" value="${fc.headerCount || 0}" onchange="updateFileConfig(${idx})">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Trailer Skip</label>
+                            <input type="number" class="form-control form-control-sm fc-trailer" value="${fc.trailerCount || 0}" onchange="updateFileConfig(${idx})">
+                        </div>
+                        <div class="col-md-3 fc-payable-col" style="display: ${isOvertime ? 'none' : 'block'};">
+                            <label class="form-label">Total Payable Col</label>
+                            <input type="number" class="form-control form-control-sm fc-total" value="${fc.totalPayableColumn || ''}" onchange="updateFileConfig(${idx})">
+                        </div>
+                        <div class="col-md-3 fc-overtime-col" style="display: ${isOvertime ? 'block' : 'none'};">
+                            <label class="form-label">Overtime Payable Col</label>
+                            <input type="number" class="form-control form-control-sm fc-overtime" value="${fc.overtimeTotalAmountColumn || ''}" onchange="updateFileConfig(${idx})">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addNewFileConfigRow() {
+            fileConfigsData.push({ fileName: '', headerCount: 0, trailerCount: 0, totalPayableColumn: '', overtimeTotalAmountColumn: '' });
+            renderFileConfigs();
+        }
+
+        function removeFileConfig(idx) {
+            saveCurrentPageData();
+            const deletedFileName = fileConfigsData[idx].fileName;
+            fileConfigsData.splice(idx, 1);
+            
+            if (deletedFileName) {
+                columnsData.forEach(col => {
+                    if (col.fileType === deletedFileName) {
+                        col.fileType = '';
+                    }
+                });
+            }
+            renderFileConfigs();
+            renderColumnTable();
+        }
+
+        function updateFileConfig(idx) {
+            const container = document.getElementById('fileConfigsContainer');
+            const row = container.children[idx];
+            if (row) {
+                const typeVal = row.querySelector('.fc-type').value;
+                const prevType = fileConfigsData[idx].fileType;
+                fileConfigsData[idx].fileType = typeVal;
+                
+                if (typeVal !== prevType) {
+                    renderFileConfigs();
+                    return; // Avoid overwriting inputs since we just re-rendered
+                }
+
+                const newFileName = row.querySelector('.fc-filename').value;
+                const prevFileName = fileConfigsData[idx].fileName;
+                fileConfigsData[idx].fileName = newFileName;
+                
+                if (prevFileName && prevFileName !== newFileName) {
+                    columnsData.forEach(col => {
+                        if (col.fileType === prevFileName) {
+                            col.fileType = newFileName ? newFileName : '';
+                        }
+                    });
+                }
+
+                fileConfigsData[idx].headerCount = row.querySelector('.fc-header').value;
+                fileConfigsData[idx].trailerCount = row.querySelector('.fc-trailer').value;
+                
+                if (typeVal === 'REGULAR') {
+                    fileConfigsData[idx].totalPayableColumn = row.querySelector('.fc-total').value;
+                    fileConfigsData[idx].overtimeTotalAmountColumn = '';
+                } else {
+                    fileConfigsData[idx].overtimeTotalAmountColumn = row.querySelector('.fc-overtime').value;
+                    fileConfigsData[idx].totalPayableColumn = '';
+                }
+                
+                // Refresh column table to update the file select options
+                saveCurrentPageData();
+                renderColumnTable();
+            }
+        }
+
         // Column Mapping Logic
         function showCreateModal() {
             document.getElementById('configId').value = '';
             document.getElementById('configName').value = '';
-            document.getElementById('headerCount').value = '0';
-            document.getElementById('trailerCount').value = '0';
-            document.getElementById('totalPayableColumn').value = '';
-            document.getElementById('overtimeTotalAmountColumn').value = '';
+            fileConfigsData = [];
+            addNewFileConfigRow();
+
             columnsData = [];
             columnCurrentPage = 1;
             document.querySelector('#configModal .modal-title').innerText = 'New Configuration';
@@ -258,10 +371,34 @@
                     if (!data) return;
                     document.getElementById('configId').value = id;
                     document.getElementById('configName').value = data.configName || '';
-                    document.getElementById('headerCount').value = data.headerCount;
-                    document.getElementById('trailerCount').value = data.trailerCount;
-                    document.getElementById('totalPayableColumn').value = data.totalPayableColumn;
-                    document.getElementById('overtimeTotalAmountColumn').value = data.overtimeTotalAmountColumn || '';
+                    
+                    if (data.fileConfigs && data.fileConfigs.length > 0) {
+                        data.fileConfigs.forEach(fc => {
+                            if (fc.fileName && (!uploadedFiles || !uploadedFiles.some(f => f.fileName === fc.fileName))) {
+                                const missingFileName = fc.fileName;
+                                fc.fileName = '';
+                                if (data.columns) {
+                                    data.columns.forEach(col => {
+                                        if (col.fileType === missingFileName) {
+                                            col.fileType = '';
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        fileConfigsData = data.fileConfigs;
+                    } else {
+                        // Fallback for old configs
+                        fileConfigsData = [{
+                            fileName: '',
+                            headerCount: data.headerCount || 0,
+                            trailerCount: data.trailerCount || 0,
+                            totalPayableColumn: data.totalPayableColumn || '',
+                            overtimeTotalAmountColumn: data.overtimeTotalAmountColumn || ''
+                        }];
+                    }
+                    renderFileConfigs();
+                    
                     document.querySelector('#configModal .modal-title').innerText = 'Edit Configuration';
                     
                     columnsData = data.columns.map(col => ({
@@ -336,22 +473,24 @@
                 const globalIdx = startIndex + idx;
                 const row = document.createElement('tr');
                 let fileOptionsHTML = '';
-                if (uploadedFiles && uploadedFiles.length > 0) {
+                const configuredFileNames = fileConfigsData.map(fc => fc.fileName).filter(n => n);
+                
+                if (configuredFileNames.length > 0) {
+                    configuredFileNames.forEach(fName => {
+                        const isSelected = col.fileType === fName ? 'selected' : '';
+                        fileOptionsHTML += `<option value="${fName}" ${isSelected}>${fName}</option>`;
+                    });
+                } else if (uploadedFiles && uploadedFiles.length > 0) {
                     uploadedFiles.forEach(f => {
                         const isSelected = col.fileType === f.fileName ? 'selected' : '';
                         fileOptionsHTML += `<option value="${f.fileName}" ${isSelected}>${f.fileName}</option>`;
                     });
-                } else {
-                    const regSelected = col.fileType === 'Regular File' ? 'selected' : '';
-                    const ovtSelected = col.fileType === 'Overtime File' ? 'selected' : '';
-                    fileOptionsHTML += `<option value="Regular File" ${regSelected}>Regular File</option>
-                                        <option value="Overtime File" ${ovtSelected}>Overtime File</option>`;
                 }
 
                 row.innerHTML = `
                     <td class="file-name-cell">
                         <select class="form-select form-select-sm" required>
-                            <option value="" disabled ${!col.fileType ? 'selected' : ''}>-- Select --</option>
+                            <option value="" ${!col.fileType ? 'selected' : ''}>-- Select --</option>
                             ${fileOptionsHTML}
                         </select>
                     </td>
@@ -426,28 +565,137 @@
             renderColumnTable();
         }
 
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: false,
+            background: '#ef4444',
+            color: '#ffffff',
+            width: 'auto',
+            showClass: { popup: '' },
+            hideClass: { popup: '' },
+            customClass: { popup: 'error-toast-style' }
+        });
+
+        function showErrorToast(msg) {
+            Toast.fire({
+                html: `<div class="d-flex align-items-center" style="gap: 8px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+                          </svg>
+                          <span style="font-size: 0.85rem; font-weight: 500; white-space: nowrap; letter-spacing: 0.2px;">${msg}</span>
+                       </div>`
+            });
+        }
+
+        function highlightError(elementSelector) {
+            const el = typeof elementSelector === 'string' ? document.querySelector(elementSelector) : elementSelector;
+            if (el) {
+                el.classList.add('outline-danger');
+                const removeErr = () => el.classList.remove('outline-danger');
+                el.addEventListener('focus', removeErr, { once: true });
+                el.addEventListener('change', removeErr, { once: true });
+                el.addEventListener('click', removeErr, { once: true });
+                if(typeof elementSelector === 'string') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
         function saveConfiguration() {
-            saveCurrentPageData(); // Ensure last edits are captured
+            saveCurrentPageData(); 
             
             const id = document.getElementById('configId').value;
             const configName = document.getElementById('configName').value.trim();
-            const totalPayableCol = document.getElementById('totalPayableColumn').value;
-            const overtimeTotalCol = document.getElementById('overtimeTotalAmountColumn').value;
 
-            if (!configName || !totalPayableCol) {
-                Swal.fire('Error', 'Configuration name and Total Payable column are mandatory.', 'error');
+            if (!configName) {
+                showErrorToast('Configuration name is mandatory.');
+                highlightError('#configName');
+                return;
+            }
+            
+            if (fileConfigsData.length === 0) {
+                showErrorToast('Please add at least one File Config.');
                 return;
             }
 
-            const validColumns = columnsData.filter(c => c.columnName && c.columnName.trim() !== '');
+            for (let i = 0; i < fileConfigsData.length; i++) {
+                if (!fileConfigsData[i].fileName) {
+                    showErrorToast('File Name is mandatory.');
+                    highlightError(`#fileConfigsContainer > div:nth-child(${i+1}) .fc-filename`);
+                    return;
+                }
+                if (fileConfigsData[i].fileType === 'REGULAR' && !fileConfigsData[i].totalPayableColumn) {
+                    showErrorToast('Total Payable Column is mandatory.');
+                    highlightError(`#fileConfigsContainer > div:nth-child(${i+1}) .fc-total`);
+                    return;
+                }
+                if (fileConfigsData[i].fileType === 'OVERTIME' && !fileConfigsData[i].overtimeTotalAmountColumn) {
+                    showErrorToast('Overtime Payable Column is mandatory.');
+                    highlightError(`#fileConfigsContainer > div:nth-child(${i+1}) .fc-overtime`);
+                    return;
+                }
+            }
+
+            // Column Mapping Validations
+            for (let i = 0; i < columnsData.length; i++) {
+                const c = columnsData[i];
+                let errorMsg = null;
+                let cellIndex = -1;
+
+                if (!c.fileType || c.fileType.trim() === '') { errorMsg = 'File Name is mandatory for all mapped columns.'; cellIndex = 1; }
+                else if (!c.columnName || c.columnName.trim() === '') { errorMsg = 'Column Name is mandatory.'; cellIndex = 2; }
+                else if (!c.dataType || c.dataType.trim() === '') { errorMsg = 'Data Type is mandatory.'; cellIndex = 3; }
+                else if (c.columnPosition === undefined || c.columnPosition === null || c.columnPosition.toString().trim() === '') { errorMsg = 'POS (Excel) is mandatory.'; cellIndex = 4; }
+                else if (c.dataType === 'NUMBER' && (!c.salaryType || c.salaryType.trim() === '')) { errorMsg = 'E/D is mandatory for NUMBER data type.'; cellIndex = 5; }
+
+                if (errorMsg) {
+                    showErrorToast(errorMsg);
+                    
+                    const targetPage = Math.floor(i / columnPageSize) + 1;
+                    if (columnCurrentPage !== targetPage) {
+                        columnCurrentPage = targetPage;
+                        renderColumnTable();
+                    }
+                    
+                    const rowIdxOnPage = i % columnPageSize;
+                    const rowEl = document.getElementById('columnBody').children[rowIdxOnPage];
+                    if (rowEl) {
+                        let inputEl;
+                        if (cellIndex === 1) inputEl = rowEl.querySelector('td.file-name-cell select');
+                        if (cellIndex === 2) inputEl = rowEl.querySelector('td.column-name-cell input');
+                        if (cellIndex === 3) inputEl = rowEl.querySelector('td:nth-child(3) select');
+                        if (cellIndex === 4) inputEl = rowEl.querySelector('td.pos-cell input');
+                        if (cellIndex === 5) inputEl = rowEl.querySelector('td.ed-cell .ed-container');
+                        
+                        if (inputEl) {
+                            highlightError(inputEl);
+                        }
+                    }
+                    return;
+                }
+            }
+            
+            const validColumns = columnsData;
+            
+            for (let fc of fileConfigsData) {
+                const hasKey = validColumns.some(c => c.fileType === fc.fileName && c.isKey === true);
+                if (!hasKey) {
+                    showErrorToast(`File "${fc.fileName}" must have at least one Key Column.`);
+                    return;
+                }
+            }
 
             const data = {
                 id: id ? parseInt(id) : null,
                 configName: configName,
-                headerCount: parseInt(document.getElementById('headerCount').value) || 0,
-                trailerCount: parseInt(document.getElementById('trailerCount').value) || 0,
-                totalPayableColumn: parseInt(totalPayableCol),
-                overtimeTotalAmountColumn: overtimeTotalCol ? parseInt(overtimeTotalCol) : 0,
+                fileConfigs: fileConfigsData.map(fc => ({
+                    fileName: fc.fileName,
+                    headerCount: parseInt(fc.headerCount) || 0,
+                    trailerCount: parseInt(fc.trailerCount) || 0,
+                    totalPayableColumn: parseInt(fc.totalPayableColumn) || 0,
+                    overtimeTotalAmountColumn: parseInt(fc.overtimeTotalAmountColumn) || 0
+                })),
                 columns: validColumns.map(c => ({
                     fileType: c.fileType,
                     columnName: c.columnName,
@@ -506,5 +754,7 @@
             window.location.href = '/contractor/preview-config/' + id;
         }
     </script>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
+

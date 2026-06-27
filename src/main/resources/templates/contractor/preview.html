@@ -9,15 +9,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .container { max-width: 1200px; margin-top: 50px; }
-        .header-section { text-align: center; margin-bottom: 30px; position: relative; }
-        .btn-save-container { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+        .header-section { margin-bottom: 30px; }
         .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; overflow: hidden; }
+        .table { width: auto; min-width: 100%; white-space: nowrap; margin-bottom: 0; }
+        .table th, .table td { white-space: nowrap; }
         .table thead { background-color: #f1f5f9; }
         .table th { font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: #64748b; padding: 16px; border-bottom: 1px solid #e2e8f0; }
         .table td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #f1f5f9; }
         .btn-save { background-color: #059669; color: white; font-weight: 600; padding: 6px 16px; border-radius: 6px; font-size: 0.85rem; transition: all 0.2s; border: none; }
         .btn-save:hover { background-color: #047857; color: white; transform: translateY(-1px); }
         .badge-count { background-color: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .table th { cursor: pointer; user-select: none; position: relative; }
+        .table th:hover { background-color: #e2e8f0; }
+        .sort-icon { display: inline-block; margin-left: 6px; font-size: 0.85rem; font-weight: bold; color: #0f172a; }
+        .sort-icon-default { display: inline-block; margin-left: 6px; color: #cbd5e1; font-size: 0.85rem; font-weight: normal; letter-spacing: -2px; }
     </style>
 </head>
 <body>
@@ -28,16 +33,20 @@
             <button class="btn btn-light" style="font-size: 0.85rem;" onclick="history.back()">&larr; Back</button>
         </div>
 
-        <div class="header-section" style="margin-bottom: 20px;">
+        <div class="header-section d-flex align-items-center justify-content-between" style="margin-bottom: 20px;">
             <h2 class="fw-bold mb-0 text-start" style="color: #1e293b; letter-spacing: -0.025em;">Preview Processed Data</h2>
-            <div class="btn-save-container">
-                <form action="/contractor/save-data" method="post">
+            
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 250px;">
+                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search data...">
+                </div>
+                <form action="/contractor/save-data" method="post" class="mb-0">
                     <button type="submit" class="btn btn-save">Confirm & Save</button>
                 </form>
             </div>
         </div>
 
-        <div class="mb-2 d-flex align-items-center">
+        <div class="mb-3 d-flex align-items-center justify-content-between">
             <span class="badge-count" th:text="${data.size() + ' Rows Detected'}"></span>
         </div>
 
@@ -46,25 +55,179 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">Sr No.</th>
-                            <th th:each="col : ${columns}" th:text="${col.columnName}"></th>
+                            <th style="width: 80px;">Sr No. <span class="sort-icon-default">&#8593;&#8595;</span></th>
+                            <th th:each="col : ${columns}">
+                                <span th:text="${col.columnName}"></span><span class="sort-icon-default">&#8593;&#8595;</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="row, stat : ${data}">
                             <td class="text-muted small" th:text="${stat.count}"></td>
-                            <td th:each="cell : ${row}">
-                                <span th:text="${cell}"></span>
+                            <td th:each="cell, cellStat : ${row}">
+                                <span th:with="col=${columns[cellStat.index]}">
+                                    <span th:text="${(cell == null || cell.trim().isEmpty()) ? (col.dataType != null && 'NUMBER'.equalsIgnoreCase(col.dataType) ? '0' : '-') : cell}"></span>
+                                </span>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(data)}">
+                        <tr th:if="${#lists.isEmpty(data)}" class="no-data-row">
                             <td th:colspan="${#lists.size(columns) + 1}" class="text-center py-5 text-muted">No data found after applying filters.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <div class="d-flex justify-content-center align-items-center p-3 border-top bg-white" id="pagination-container" style="display: none !important; gap: 1rem;">
+                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-first" style="border-radius: 8px;">&laquo;</button>
+                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-prev" style="border-radius: 8px;">&lsaquo;</button>
+                <span class="text-primary fw-medium" id="pagination-info" style="font-size: 1.1rem; margin: 0 10px;">1 / 1</span>
+                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-next" style="border-radius: 8px;">&rsaquo;</button>
+                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-last" style="border-radius: 8px;">&raquo;</button>
+            </div>
         </div>
 
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const table = document.querySelector('.table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr:not(.no-data-row)'));
+            
+            // Pagination settings
+            const rowsPerPage = 15;
+            let currentPage = 1;
+            const paginationContainer = document.getElementById('pagination-container');
+            const paginationInfo = document.getElementById('pagination-info');
+            const btnFirst = document.getElementById('btn-first');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnLast = document.getElementById('btn-last');
+
+            function renderTable() {
+                const term = searchInput.value.toLowerCase();
+                const filteredRows = rows.filter(row => row.textContent.toLowerCase().includes(term));
+                
+                const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+                if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                rows.forEach(row => row.style.display = 'none'); // Hide all
+
+                const startIdx = (currentPage - 1) * rowsPerPage;
+                const endIdx = startIdx + rowsPerPage;
+
+                let visibleCount = 0;
+                filteredRows.forEach((row, idx) => {
+                    if (idx >= startIdx && idx < endIdx) {
+                        row.style.display = '';
+                    }
+                    visibleCount++;
+                });
+
+                // Update pagination UI
+                if (filteredRows.length > rowsPerPage) {
+                    paginationContainer.style.setProperty('display', 'flex', 'important');
+                    paginationInfo.textContent = `${currentPage} / ${totalPages}`;
+                    btnFirst.disabled = currentPage === 1;
+                    btnPrev.disabled = currentPage === 1;
+                    btnNext.disabled = currentPage === totalPages;
+                    btnLast.disabled = currentPage === totalPages;
+                } else {
+                    paginationContainer.style.setProperty('display', 'none', 'important');
+                }
+
+                // Empty state
+                let noDataRow = tbody.querySelector('.no-data-row');
+                if (visibleCount === 0 && rows.length > 0) {
+                    if (!noDataRow) {
+                        noDataRow = document.createElement('tr');
+                        noDataRow.className = 'no-data-row';
+                        noDataRow.innerHTML = `<td colspan="${table.querySelectorAll('th').length}" class="text-center py-5 text-muted">No matching data found.</td>`;
+                        tbody.appendChild(noDataRow);
+                    }
+                    noDataRow.style.display = '';
+                } else if (noDataRow) {
+                    noDataRow.style.display = 'none';
+                }
+            }
+
+            btnFirst.addEventListener('click', () => { if (currentPage > 1) { currentPage = 1; renderTable(); } });
+            btnPrev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+            btnNext.addEventListener('click', () => { 
+                const term = searchInput.value.toLowerCase();
+                const filteredRows = rows.filter(row => row.textContent.toLowerCase().includes(term));
+                if (currentPage < Math.ceil(filteredRows.length / rowsPerPage)) { currentPage++; renderTable(); } 
+            });
+            btnLast.addEventListener('click', () => { 
+                const term = searchInput.value.toLowerCase();
+                const filteredRows = rows.filter(row => row.textContent.toLowerCase().includes(term));
+                const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+                if (currentPage < totalPages) { currentPage = totalPages; renderTable(); } 
+            });
+
+            searchInput.addEventListener('input', () => {
+                currentPage = 1;
+                renderTable();
+            });
+
+            // Sorting functionality
+            const headers = table.querySelectorAll('th');
+            let currentSortCol = -1;
+            let currentSortAsc = true;
+
+            headers.forEach((header, index) => {
+                header.addEventListener('click', () => {
+                    if (currentSortCol === index) {
+                        currentSortAsc = !currentSortAsc;
+                    } else {
+                        currentSortCol = index;
+                        currentSortAsc = true;
+                    }
+
+                    // Update icons
+                    headers.forEach(h => {
+                        const icon = h.querySelector('.sort-icon');
+                        if(icon) icon.remove();
+                        const def = h.querySelector('.sort-icon-default');
+                        if(def) def.style.display = 'inline-block';
+                    });
+                    
+                    const def = header.querySelector('.sort-icon-default');
+                    if(def) def.style.display = 'none';
+
+                    const icon = document.createElement('span');
+                    icon.className = 'sort-icon';
+                    icon.innerHTML = currentSortAsc ? '&#8593;' : '&#8595;';
+                    header.appendChild(icon);
+
+                    // Sort rows
+                    const sortedRows = rows.sort((a, b) => {
+                        let aVal = a.cells[index].textContent.trim();
+                        let bVal = b.cells[index].textContent.trim();
+                        
+                        if(aVal === '-') aVal = '';
+                        if(bVal === '-') bVal = '';
+
+                        const aNum = parseFloat(aVal.replace(/,/g, ''));
+                        const bNum = parseFloat(bVal.replace(/,/g, ''));
+                        
+                        if (!isNaN(aNum) && !isNaN(bNum) && aVal !== '' && bVal !== '') {
+                            return currentSortAsc ? aNum - bNum : bNum - aNum;
+                        }
+                        
+                        return currentSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    });
+
+                    sortedRows.forEach(row => tbody.appendChild(row));
+                    currentPage = 1;
+                    renderTable();
+                });
+            });
+            
+            // Initial render
+            renderTable();
+        });
+    </script>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
