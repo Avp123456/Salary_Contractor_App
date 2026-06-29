@@ -13,7 +13,9 @@
         animation: fadeIn 0.5s ease-out;
     }
     .navbar {
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: #e6f0f9; /* Faint blue-grey matching the image */
+        border-bottom: 1px solid #d1e3f0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         padding: 0.8rem 1rem;
         font-family: 'Inter', sans-serif;
     }
@@ -21,22 +23,27 @@
         font-weight: 700;
         letter-spacing: -0.02em;
         font-size: 1.25rem;
+        color: #1e293b !important;
     }
     .nav-link {
+        color: #475569 !important;
         font-weight: 500;
         font-size: 0.95rem;
         transition: all 0.2s ease;
-        padding: 8px 15px !important;
+        padding: 8px 16px !important;
         border-radius: 8px;
+        margin: 0 4px;
     }
     .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: transparent !important;
+        color: #f97316 !important; /* Orange hover matching image */
     }
     .nav-link.active {
-        color: #fff !important;
-        background-color: #2563eb !important;
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        color: #f97316 !important; /* Orange active text matching image */
+        background: transparent !important;
+        font-weight: 700;
+        box-shadow: none;
+        transform: none;
     }
     @media (max-width: 768px) {
         .container-fluid {
@@ -54,7 +61,7 @@
 <!-- ✅ NAVBAR FRAGMENT -->
 <div th:fragment="navbar(pageTitle)" class="sticky-top" style="z-index: 1020;">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e6f0f9;">
   <div class="container-fluid">
 
     <a class="navbar-brand" href="/contractor/dashboard">
@@ -64,14 +71,14 @@
     <div class="d-flex align-items-center order-lg-3">
         <!-- Profile Logo (Always Visible) -->
         <div class="ms-2 ms-lg-3">
-            <a href="/contractor/profile" class="d-flex align-items-center text-white text-decoration-none nav-link" 
+            <a href="/contractor/profile" class="d-flex align-items-center text-decoration-none nav-link" 
                th:classappend="${pageTitle == 'Profile' ? 'active' : ''}" style="padding: 4px 8px !important;">
-                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-1 me-lg-2" 
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-1 me-lg-2 text-white" 
                      style="width: 32px; height: 32px; background: #2563eb; border: 2px solid rgba(255,255,255,0.2); font-size: 0.8rem;"
                      th:text="${session.loggedInContractor != null ? #strings.substring(session.loggedInContractor.name, 0, 1).toUpperCase() : 'U'}">
                     R
                 </div>
-                <div class="d-none d-md-block">
+                <div class="d-none d-md-block text-dark">
                     <div class="fw-bold" style="font-size: 0.85rem;" th:text="${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">Ritesh</div>
                 </div>
             </a>
