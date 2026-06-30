@@ -54,6 +54,7 @@
     
     
 </style>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -69,17 +70,18 @@
     </a>
 
     <div class="d-flex align-items-center order-lg-3">
-        <!-- Profile Logo (Always Visible) -->
-        <div class="ms-2 ms-lg-3">
+        <!-- Profile Logo (Always Visible on desktop) -->
+        <div class="ms-2 ms-lg-3 d-none d-lg-block">
             <a href="/contractor/profile" class="d-flex align-items-center text-decoration-none nav-link" 
                th:classappend="${pageTitle == 'Profile' ? 'active' : ''}" style="padding: 4px 8px !important;">
-                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-1 me-lg-2 text-white" 
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-1 me-lg-2 text-white user-initials" 
                      style="width: 32px; height: 32px; background: #2563eb; border: 2px solid rgba(255,255,255,0.2); font-size: 0.8rem;"
-                     th:text="${session.loggedInContractor != null ? #strings.substring(session.loggedInContractor.name, 0, 1).toUpperCase() : 'U'}">
-                    R
+                     th:attr="data-name=${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">
+                    U
                 </div>
-                <div class="d-none d-md-block text-dark">
-                    <div class="fw-bold" style="font-size: 0.85rem;" th:text="${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">Ritesh</div>
+                <div class="text-dark d-flex flex-column justify-content-center">
+                    <div class="fw-bold" style="font-size: 0.85rem; line-height: 1.2;" th:text="${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">Ritesh</div>
+                    <div class="text-muted" style="font-size: 0.7rem; line-height: 1;" th:text="${session.loggedInContractor != null ? session.loggedInContractor.email : 'email@example.com'}">email@example.com</div>
                 </div>
             </a>
         </div>
@@ -93,16 +95,64 @@
       <ul class="navbar-nav ms-auto gap-1">
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Dashboard' ? 'active' : ''}" href="/contractor/dashboard">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Employees' ? 'active' : ''}" href="/contractor/employees">Employees</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Files' ? 'active' : ''}" href="/contractor/files">Files</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Configuration' ? 'active' : ''}" href="/contractor/configurations">Configuration</a></li>
-        <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Salary' ? 'active' : ''}" href="/contractor/salary">Salary</a></li>
+        
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" 
+               th:classappend="${pageTitle == 'Files' or pageTitle == 'Configuration' or pageTitle == 'Salary' ? 'active' : ''}">
+                Salary Management
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" th:classappend="${pageTitle == 'Files' ? 'active' : ''}" href="/contractor/files">Files</a></li>
+                <li><a class="dropdown-item" th:classappend="${pageTitle == 'Configuration' ? 'active' : ''}" href="/contractor/configurations">Configuration</a></li>
+                <li><a class="dropdown-item" th:classappend="${pageTitle == 'Salary' ? 'active' : ''}" href="/contractor/salary">Salary</a></li>
+            </ul>
+        </li>
+
         <li class="nav-item"><a class="nav-link" th:classappend="${pageTitle == 'Payments' ? 'active' : ''}" href="/contractor/payments">Payments</a></li>
-       
       </ul>
+
+      <!-- Mobile Profile Card -->
+      <div class="d-lg-none mt-4 mb-2">
+          <div class="card p-3" style="border-radius: 12px; background-color: #2b3543; border: none;">
+              <a href="/contractor/profile" class="d-flex align-items-center mb-3 text-decoration-none">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white me-3 user-initials" 
+                       style="width: 48px; height: 48px; background: #007bff; font-size: 1.2rem;"
+                       th:attr="data-name=${session.loggedInContractor != null ? session.loggedInContractor.name : 'Demo User'}">
+                      DU
+                  </div>
+                  <div class="text-white">
+                      <div class="fw-bold" th:text="${session.loggedInContractor != null ? session.loggedInContractor.name : 'Demo User'}">Demo User</div>
+                      <div class="text-light" style="font-size: 0.8rem; opacity: 0.8;" th:text="${session.loggedInContractor != null ? session.loggedInContractor.email : 'demouser@gmail.com'}">demouser@gmail.com</div>
+                  </div>
+              </a>
+              <a href="/contractor/change-password" class="btn btn-secondary w-100 mb-2" style="background-color: #475569; border: none; border-radius: 8px; font-size: 0.9rem;">
+                  Change password
+              </a>
+              <a href="/logout" class="btn btn-danger w-100" style="background-color: #ef4444; border: none; border-radius: 8px; font-size: 0.9rem;">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+          </div>
+      </div>
     </div>
   </div>
 </nav>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const initialsElements = document.querySelectorAll('.user-initials');
+            initialsElements.forEach(el => {
+                const name = el.getAttribute('data-name') || '';
+                const parts = name.trim().split(/\s+/);
+                let initials = 'U';
+                if (parts.length > 1) {
+                    initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                } else if (parts.length === 1 && parts[0].length > 0) {
+                    initials = parts[0][0].toUpperCase();
+                }
+                el.textContent = initials;
+            });
+        });
+    </script>
 </div>
 
 </body>

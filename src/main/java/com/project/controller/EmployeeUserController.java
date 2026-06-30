@@ -374,6 +374,9 @@ public class EmployeeUserController {
             if (currentPassword == null || !dbEmp.getPassword().equals(currentPassword)) {
                 return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "Current password is incorrect"));
             }
+            if (dbEmp.getPassword().equals(newPassword)) {
+                return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "New password cannot be the same as the current password"));
+            }
         }
         
         if (!newPassword.equals(confirmPassword)) {

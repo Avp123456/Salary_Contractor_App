@@ -30,6 +30,30 @@
         .error-toast-style { margin-top: 70px !important; border-radius: 6px !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; padding: 10px 20px !important; width: auto !important; max-width: none !important; min-height: auto !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-direction: row !important; }
         .error-toast-style .swal2-html-container { margin: 0 !important; padding: 0 !important; overflow: visible !important; color: white !important; }
         .outline-danger { outline: 2px solid #ef4444 !important; outline-offset: -1px; }
+        /* Pagination Styles */
+        .pagination-container { 
+            padding: 15px 24px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: transparent;
+            gap: 5px;
+        }
+        .page-info { font-size: 0.9rem; color: #3b82f6; font-weight: 600; margin: 0 10px; }
+        .pagination-btn { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: none; 
+            background: transparent; 
+            color: #94a3b8; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            padding: 4px;
+        }
+        .pagination-btn svg { fill: currentColor; stroke: none; }
+        .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
+        .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -71,13 +95,21 @@
             </div>
             <!-- Pagination for Configurations -->
             <div id="configPagination" class="d-flex justify-content-center mt-3 mb-2" th:if="${not #lists.isEmpty(configurations)}">
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item"><button class="page-link" onclick="changeConfigPage(configCurrentPage - 1)" id="prevConfigBtn">Previous</button></li>
-                        <li class="page-item disabled"><span class="page-link" id="configPageInfo">1 / 1</span></li>
-                        <li class="page-item"><button class="page-link" onclick="changeConfigPage(configCurrentPage + 1)" id="nextConfigBtn">Next</button></li>
-                    </ul>
-                </nav>
+                <div class="pagination-container">
+                    <button class="pagination-btn" onclick="changeConfigPage(1)" id="firstConfigBtn" title="First Page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
+                    </button>
+                    <button class="pagination-btn" onclick="changeConfigPage(configCurrentPage - 1)" id="prevConfigBtn" title="Previous Page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                    </button>
+                    <span class="page-info" id="configPageInfo">1 / 1</span>
+                    <button class="pagination-btn" onclick="changeConfigPage(configCurrentPage + 1)" id="nextConfigBtn" title="Next Page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                    <button class="pagination-btn" onclick="changeConfigPage(999999)" id="lastConfigBtn" title="Last Page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -130,13 +162,21 @@
                     </div>
                     <!-- Pagination for Column Mapping -->
                     <div id="columnPagination" class="d-flex justify-content-center mt-2">
-                        <nav>
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item"><button class="page-link" onclick="changeColumnPage(columnCurrentPage - 1)" id="prevColBtn">Previous</button></li>
-                                <li class="page-item disabled"><span class="page-link" id="columnPageInfo">1 / 1</span></li>
-                                <li class="page-item"><button class="page-link" onclick="changeColumnPage(columnCurrentPage + 1)" id="nextColBtn">Next</button></li>
-                            </ul>
-                        </nav>
+                        <div class="pagination-container">
+                            <button class="pagination-btn" onclick="changeColumnPage(1)" id="firstColBtn" title="First Page">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
+                            </button>
+                            <button class="pagination-btn" onclick="changeColumnPage(columnCurrentPage - 1)" id="prevColBtn" title="Previous Page">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                            </button>
+                            <span class="page-info" id="columnPageInfo">1 / 1</span>
+                            <button class="pagination-btn" onclick="changeColumnPage(columnCurrentPage + 1)" id="nextColBtn" title="Next Page">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                            </button>
+                            <button class="pagination-btn" onclick="changeColumnPage(999999)" id="lastColBtn" title="Last Page">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
@@ -215,8 +255,13 @@
             });
 
             document.getElementById('configPageInfo').innerText = `${configCurrentPage} / ${totalPages}`;
-            document.getElementById('prevConfigBtn').parentElement.classList.toggle('disabled', configCurrentPage === 1);
-            document.getElementById('nextConfigBtn').parentElement.classList.toggle('disabled', configCurrentPage === totalPages);
+            document.getElementById('firstConfigBtn').disabled = configCurrentPage === 1;
+            document.getElementById('prevConfigBtn').disabled = configCurrentPage === 1;
+            document.getElementById('nextConfigBtn').disabled = configCurrentPage === totalPages;
+            document.getElementById('lastConfigBtn').disabled = configCurrentPage === totalPages;
+            
+            // To handle last button properly we can just fix the click action which is using 999999.
+            document.getElementById('lastConfigBtn').setAttribute('onclick', `changeConfigPage(${totalPages})`);
         }
 
         function changeConfigPage(page) {
@@ -540,8 +585,11 @@
             // Update Pagination UI
             const totalPages = Math.ceil(columnsData.length / columnPageSize) || 1;
             document.getElementById('columnPageInfo').innerText = `${columnCurrentPage} / ${totalPages}`;
-            document.getElementById('prevColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === 1);
-            document.getElementById('nextColBtn').parentElement.classList.toggle('disabled', columnCurrentPage === totalPages);
+            document.getElementById('firstColBtn').disabled = columnCurrentPage === 1;
+            document.getElementById('prevColBtn').disabled = columnCurrentPage === 1;
+            document.getElementById('nextColBtn').disabled = columnCurrentPage === totalPages;
+            document.getElementById('lastColBtn').disabled = columnCurrentPage === totalPages;
+            document.getElementById('lastColBtn').setAttribute('onclick', `changeColumnPage(${totalPages})`);
             document.getElementById('columnPagination').style.display = totalPages > 0 ? 'flex' : 'none';
         }
 

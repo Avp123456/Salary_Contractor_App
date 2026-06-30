@@ -52,4 +52,43 @@ public class ProfileController {
 
         return "redirect:/contractor/profile";
     }
+
+    @GetMapping("/contractor/change-password")
+    public String changePasswordPage(Model model, HttpSession session) {
+        Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
+        if (sessionContractor == null) {
+            return "redirect:/contractor/login";
+        }
+        Contractor contractor = userService.findByEmail(sessionContractor.getEmail());
+        model.addAttribute("contractor", contractor);
+        return "contractor/change-password";
+    }
+
+    @PostMapping("/contractor/update-password")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
+        Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
+        if (sessionContractor == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
+
+        Contractor dbContractor = userService.findByEmail(sessionContractor.getEmail());
+        if (dbContractor == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
+
+        if (!dbContractor.getPassword().equals(currentPassword)) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "Current password is incorrect"));
+        }
+        
+        if (currentPassword.equals(newPassword)) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "New password cannot be the same as the current password"));
+        }
+        
+        if (!newPassword.equals(confirmPassword)) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("status", "error", "message", "New passwords do not match"));
+        }
+
+        dbContractor.setPassword(newPassword);
+        userService.save(dbContractor);
+        session.setAttribute("loggedInContractor", dbContractor);
+
+        return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status", "success", "message", "Password updated successfully", "redirect", "/contractor/profile"));
+    }
 }

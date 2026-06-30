@@ -11,8 +11,7 @@
         .action-buttons { text-align: center; margin-bottom: 20px; }
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; display: inline-block; margin: 0 5px; text-decoration: none; transition: all 0.2s; color: white; }
         .btn-download { background: #2563eb; }
-        .btn-whatsapp { background: #25D366; }
-        .btn-email { background: #ea4335; }
+        .btn-share { background: #10b981; }
         .btn-back { background: #64748b; }
         
         .payslip-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border: 1px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -55,8 +54,7 @@
     <div class="action-buttons" data-html2canvas-ignore="true">
         <a href="/employee/dashboard" class="btn btn-back">Back</a>
         <button onclick="downloadPDF()" class="btn btn-download">Download PDF</button>
-        <button onclick="shareWhatsApp()" class="btn btn-whatsapp">Share on WhatsApp</button>
-        <a th:href="'mailto:?subject=Payslip - ' + ${employeeName} + '&body=Please find your payslip attached. Download it from your portal.'" class="btn btn-email">Share via Email</a>
+        <button onclick="sharePayslip()" class="btn btn-share">Share Payslip</button>
     </div>
 
     <div class="payslip-container" id="payslipContent">
@@ -174,7 +172,7 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        function shareWhatsApp() {
+        function sharePayslip() {
             const element = document.getElementById('payslipContent');
             const rawEmpName = '[[${employeeName}]]';
             const cleanEmpName = rawEmpName.replace(/\s+/g, '');
@@ -188,7 +186,7 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
-            const btn = document.querySelector('.btn-whatsapp');
+            const btn = document.querySelector('.btn-share');
             const originalText = btn.innerHTML;
             btn.innerHTML = 'Preparing...';
             btn.disabled = true;
@@ -197,37 +195,21 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
 
-                if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     navigator.share({
                         files: [file],
-                        title: pdfFileName
+                        title: 'Payslip',
+                        text: `Payslip for [[${employeeName}]]`
                     }).catch(err => console.error("Error sharing PDF:", err));
                 } else {
-                    // Desktop Flow
-                    Swal.fire({
-                        title: 'Share via WhatsApp Web',
-                        html: '<p style="font-size: 0.95rem; color: #475569;">WhatsApp Web does not support automatic file attachments.</p><p style="font-size: 0.95rem; color: #475569;">Click below to download your secure PDF payslip and automatically open WhatsApp Web, where you can easily drag-and-drop the file to your contact.</p>',
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonText: '<i class="bi bi-download me-1"></i> Download & Open WhatsApp',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#25D366',
-                        cancelButtonColor: '#64748b',
-                        customClass: {
-                            confirmButton: 'fw-bold rounded-pill px-4',
-                            cancelButton: 'fw-bold rounded-pill px-4'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            html2pdf().set(opt).from(element).save();
-                            setTimeout(() => {
-                                window.open('https://web.whatsapp.com/', '_blank');
-                            }, 500);
-                        }
-                    });
+                    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                        alert("Native file sharing is blocked by your mobile browser because you are accessing this site via a local IP address (HTTP) instead of HTTPS. Falling back to downloading the file.");
+                    } else {
+                        alert("Your browser does not support native file sharing. Falling back to download.");
+                    }
+                    html2pdf().set(opt).from(element).save();
                 }
             }).catch(err => {
                 btn.innerHTML = originalText;

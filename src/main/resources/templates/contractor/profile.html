@@ -20,13 +20,7 @@
             margin: 0;
             font-family: 'Inter', sans-serif;
             background: #f1f5f9;
-        }
-
-        /* Desktop specific: No scrollbar */
-        @media (min-width: 992px) {
-            body, html {
-                overflow: hidden;
-            }
+            overflow-x: hidden;
         }
 
         .main-wrapper {
@@ -222,9 +216,10 @@
             <div class="profile-card-modern">
                 <!-- Sidebar -->
                 <div class="profile-sidebar">
-                    <div class="avatar-circle" th:text="${session.loggedInContractor != null ? #strings.substring(session.loggedInContractor.name, 0, 1).toUpperCase() : 'U'}">A</div>
+                    <div class="avatar-circle user-initials" th:attr="data-name=${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">U</div>
                     <h4 class="fw-bold mb-0" th:text="${session.loggedInContractor != null ? session.loggedInContractor.name : 'User'}">Name</h4>
-                    <p class="small opacity-75 mb-0">Authorized Contractor</p>
+                    <p class="small opacity-75 mb-1" th:text="${session.loggedInContractor != null ? session.loggedInContractor.email : 'email@example.com'}">email@example.com</p>
+                    <p class="small opacity-50 mb-0">Authorized Contractor</p>
                     <div class="badge-verified"><i class="bi bi-patch-check-fill me-1"></i> Verified Account</div>
                 </div>
 
@@ -252,6 +247,9 @@
                             <button type="button" class="btn-modern btn-edit" id="editBtn">
                                 <i class="bi bi-pencil-fill"></i> Edit Profile
                             </button>
+                            <a th:href="@{/contractor/change-password}" class="btn-modern btn-edit" id="changePasswordBtn" style="color: #475569; border-color: #475569; text-decoration: none;">
+                                <i class="bi bi-key-fill"></i> Change Password
+                            </a>
                             <a th:href="@{/logout}" class="btn-modern btn-logout" id="logoutBtn">
                                 <i class="bi bi-box-arrow-right"></i> Logout
                             </a>
@@ -283,6 +281,8 @@
             nameInput.focus();
             
             editBtn.style.display = 'none';
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            if (changePasswordBtn) changePasswordBtn.style.display = 'none';
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.style.display = 'none';
             cancelBtn.style.display = 'flex';

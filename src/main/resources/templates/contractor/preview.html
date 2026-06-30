@@ -23,6 +23,30 @@
         .table th:hover { background-color: #e2e8f0; }
         .sort-icon { display: inline-block; margin-left: 6px; font-size: 0.85rem; font-weight: bold; color: #0f172a; }
         .sort-icon-default { display: inline-block; margin-left: 6px; color: #cbd5e1; font-size: 0.85rem; font-weight: normal; letter-spacing: -2px; }
+        /* Pagination Styles */
+        .pagination-container { 
+            padding: 15px 24px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: transparent;
+            gap: 5px;
+        }
+        .page-info { font-size: 0.9rem; color: #3b82f6; font-weight: 600; margin: 0 10px; }
+        .pagination-btn { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: none; 
+            background: transparent; 
+            color: #94a3b8; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            padding: 4px;
+        }
+        .pagination-btn svg { fill: currentColor; stroke: none; }
+        .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
+        .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -76,12 +100,20 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-center align-items-center p-3 border-top bg-white" id="pagination-container" style="display: none !important; gap: 1rem;">
-                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-first" style="border-radius: 8px;">&laquo;</button>
-                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-prev" style="border-radius: 8px;">&lsaquo;</button>
-                <span class="text-primary fw-medium" id="pagination-info" style="font-size: 1.1rem; margin: 0 10px;">1 / 1</span>
-                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-next" style="border-radius: 8px;">&rsaquo;</button>
-                <button class="btn btn-outline-light text-secondary border px-3 py-1" id="btn-last" style="border-radius: 8px;">&raquo;</button>
+            <div class="pagination-container border-top bg-white" id="pagination-container" style="display: none !important;">
+                <button class="pagination-btn" id="btn-first">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
+                </button>
+                <button class="pagination-btn" id="btn-prev">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                </button>
+                <span class="page-info" id="pagination-info">1 / 1</span>
+                <button class="pagination-btn" id="btn-next">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                </button>
+                <button class="pagination-btn" id="btn-last">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>
+                </button>
             </div>
         </div>
 

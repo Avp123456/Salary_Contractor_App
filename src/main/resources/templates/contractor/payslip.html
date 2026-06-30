@@ -7,13 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; padding: 20px; margin: 0; color: #000; }
-        .action-buttons { text-align: center; margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; display: inline-block; margin: 0 5px; text-decoration: none; transition: all 0.2s; color: white; }
+        .action-buttons { text-align: center; margin-top: 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .btn { padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; }
         .btn-download { background: #2563eb; }
-        .btn-whatsapp { background: #25D366; }
-        .btn-email { background: #ea4335; }
+        .btn-share { background: #10b981; }
         
-        .payslip-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border: 1px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .payslip-container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border: 1px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
         
         /* Header */
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -42,20 +41,18 @@
 
         @media print {
             body { background: white; padding: 0; }
-            .payslip-container { border: none; box-shadow: none; padding: 0; }
-            .action-buttons { display: none; }
+            .payslip-container { border: none; box-shadow: none; padding: 0; overflow-x: visible; }
+            .action-buttons { display: none !important; }
+        }
+        @media screen and (max-width: 768px) {
+            .payslip-container { padding: 15px; }
+            .btn { width: 100%; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    
-    <div class="action-buttons" data-html2canvas-ignore="true">
-        <button onclick="downloadPDF()" class="btn btn-download">Download PDF</button>
-        <button onclick="shareWhatsApp()" class="btn btn-whatsapp">Share on WhatsApp</button>
-        <a th:href="'mailto:?subject=Payslip - ' + ${employeeName} + '&body=Please find your payslip attached. Download it from your portal.'" class="btn btn-email">Share via Email</a>
-    </div>
-
     <div class="payslip-container" id="payslipContent">
 
         
@@ -160,6 +157,11 @@
         </div>
     </div>
 
+    <div class="action-buttons" data-html2canvas-ignore="true">
+        <button onclick="downloadPDF()" class="btn btn-download">Download PDF</button>
+        <button onclick="sharePayslip()" class="btn btn-share">Share</button>
+    </div>
+
     <script>
         function downloadPDF() {
             const element = document.getElementById('payslipContent');
@@ -180,10 +182,50 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        function shareWhatsApp() {
-            const url = window.location.href;
-            const text = encodeURIComponent(`Dear [[${employeeName}]],\n\nPlease find your generated payslip for [[${monthYearUi}]].\nYou can securely view and download your detailed PDF payslip using the link below:\n\n${url}\n\nBest regards,\n[[${contractorName}]]`);
-            window.open(`https://wa.me/?text=${text}`, '_blank');
+        function sharePayslip() {
+            const element = document.getElementById('payslipContent');
+            const rawEmpName = '[[${employeeName}]]';
+            const cleanEmpName = rawEmpName.replace(/\s+/g, '');
+            const pdfFileName = '[[${employeeCode}]]_' + cleanEmpName + '_[[${monthYear}]]_Payslip.pdf';
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     pdfFileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            const btn = document.querySelector('.btn-share');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Preparing...';
+            btn.disabled = true;
+
+            html2pdf().set(opt).from(element).outputPdf('blob').then(function(pdfBlob) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: 'Payslip',
+                        text: `Payslip for [[${employeeName}]]`
+                    }).catch(err => console.error("Error sharing PDF:", err));
+                } else {
+                    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                        alert("Native file sharing is blocked by your mobile browser because you are accessing this site via a local IP address (HTTP) instead of HTTPS. Falling back to downloading the file.");
+                    } else {
+                        alert("Your browser does not support native file sharing. Falling back to download.");
+                    }
+                    html2pdf().set(opt).from(element).save();
+                }
+            }).catch(err => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                console.error("Error generating PDF:", err);
+            });
         }
     </script>
 <div th:replace="~{fragments/footer :: footer}"></div>

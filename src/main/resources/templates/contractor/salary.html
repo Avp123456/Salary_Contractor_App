@@ -87,23 +87,22 @@
             align-items: center; 
             background: #fff;
             border-top: 1px solid #f1f5f9;
-            gap: 10px;
+            gap: 5px;
         }
-        .page-info { font-size: 0.85rem; color: #64748b; font-weight: 500; min-width: 100px; text-align: center; }
+        .page-info { font-size: 0.9rem; color: #3b82f6; font-weight: 600; margin: 0 10px; }
         .pagination-btn { 
-            width: 32px; 
-            height: 32px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            border-radius: 8px; 
-            border: 1px solid #e2e8f0; 
-            background: white; 
-            color: #475569; 
+            border: none; 
+            background: transparent; 
+            color: #94a3b8; 
             cursor: pointer; 
             transition: all 0.2s;
+            padding: 4px;
         }
-        .pagination-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; color: #2563eb; }
+        .pagination-btn svg { fill: currentColor; stroke: none; }
+        .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
         .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         
         /* Swal Customization to match image */
@@ -176,10 +175,10 @@
                             <td th:each="cell : ${row}" th:text="${cell}" onclick="showFullText(this.innerText)"></td>
                         </tr>
                     </tbody>
-                    <tbody th:if="${rows.empty}" id="noDataBody">
+                    <tbody id="noDataBody" th:style="${rows.empty ? '' : 'display: none;'}">
                         <tr>
                             <td th:colspan="${columns.size() + 1}" class="text-center py-5 text-muted">
-                                No data found for this configuration.
+                                No Matching Records Found
                             </td>
                         </tr>
                     </tbody>
@@ -189,19 +188,19 @@
             <!-- Pagination -->
             <div class="pagination-container" th:if="${!rows.empty}">
                 <button class="pagination-btn" onclick="goToPage(1)" id="firstPageBtn" title="First Page">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
                 </button>
                 <button class="pagination-btn" onclick="prevPage()" id="prevBtn" title="Previous Page">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
                 </button>
                 
                 <span class="page-info" id="pageDisplay">1 / 1</span>
                 
                 <button class="pagination-btn" onclick="nextPage()" id="nextBtn" title="Next Page">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
                 </button>
                 <button class="pagination-btn" onclick="goToLastPage()" id="lastPageBtn" title="Last Page">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/></svg>
                 </button>
             </div>
         </div>
