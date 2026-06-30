@@ -103,6 +103,7 @@ public class EmployeeUserController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Employee Dashboard");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return "redirect:/employee/login";
 
@@ -194,6 +195,7 @@ public class EmployeeUserController {
 
     @GetMapping("/payslip/{id}")
     public String viewPayslip(@PathVariable Long id, Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Employee View Payslip");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return "redirect:/employee/login";
 
@@ -331,6 +333,7 @@ public class EmployeeUserController {
 
     @GetMapping("/profile")
     public String profile(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Employee Profile");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return "redirect:/employee/login";
         model.addAttribute("employee", employee);
@@ -340,6 +343,7 @@ public class EmployeeUserController {
     @PostMapping("/update-profile")
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> updateProfile(@RequestParam String name, @RequestParam String mobile, HttpSession session) {
+        System.out.println("[Button clicked]:- Update Profile");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
         
@@ -355,6 +359,7 @@ public class EmployeeUserController {
 
     @GetMapping("/change-password")
     public String changePasswordPage(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Employee Change Password");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return "redirect:/employee/login";
         model.addAttribute("employee", employee);
@@ -364,6 +369,7 @@ public class EmployeeUserController {
     @PostMapping("/update-password")
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam(required = false) String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
+        System.out.println("[Button clicked]:- Update Password");
         Employee employee = getLoggedInEmployee(session);
         if (employee == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
 

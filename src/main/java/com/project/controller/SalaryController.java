@@ -43,6 +43,7 @@ public class SalaryController {
 
     @GetMapping("/contractor/salary")
     public String salary(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Salary");
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("configurations", configRepo.findByContractorId(contractorId));
         System.out.println("[INFO] Salary Page Visited "+getTime());
@@ -54,6 +55,7 @@ public class SalaryController {
     public String showSalaryData(@RequestParam(required = false) Long fileId, 
                                  @RequestParam(required = false) Long configId,
                                  Model model, HttpSession session) {
+        System.out.println("[Button clicked]:- Show Salary Data");
         Long contractorId = getCurrentContractorId(session);
         List<UploadedFileColumns> columns = null;
         List<UploadedFileData> dataList = null;

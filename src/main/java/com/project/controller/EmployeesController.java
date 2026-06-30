@@ -31,6 +31,7 @@ public class EmployeesController {
 
     @GetMapping("/contractor/employees")
     public String employees(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Employees");
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
         List<Employee> list = employeeService.getByContractor(contractor);
         model.addAttribute("employees", list);
@@ -41,6 +42,7 @@ public class EmployeesController {
 
     @GetMapping("/contractor/add-employee")
     public String addEmployeePage(Model model) {
+        System.out.println("[Page Visited]:- Add Employee");
         model.addAttribute("employee", new Employee());
         System.out.println("[ACTION] Add Employee button Clicked "+getTime());
 
@@ -52,6 +54,7 @@ public class EmployeesController {
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
 
+        System.out.println("[Button clicked]:- Save Employee");
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
 
         if (employee.getEmployeeId() == null) {
@@ -103,6 +106,7 @@ public class EmployeesController {
 
     @GetMapping("/contractor/delete-employee/{id}")
     public String deleteEmployee(@PathVariable Long id) {
+        System.out.println("[Button clicked]:- Delete Employee");
         employeeService.deleteById(id);
         System.out.println("[ACTION] Delete button Clicked "+getTime());
         return "redirect:/contractor/employees";
@@ -110,6 +114,7 @@ public class EmployeesController {
 
     @GetMapping("/contractor/edit-employee/{id}")
     public String editEmployee(@PathVariable Long id, Model model) {
+        System.out.println("[Button clicked]:- Edit Employee");
         Employee emp = employeeService.getById(id);
         model.addAttribute("employee", emp);
         System.out.println("[ACTION] Edit button Clicked "+getTime());

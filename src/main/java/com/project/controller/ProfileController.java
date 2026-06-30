@@ -20,7 +20,7 @@ public class ProfileController {
 
     @GetMapping("/contractor/profile")
     public String profile(Model model, HttpSession session) {
-
+        System.out.println("[Page Visited]:- Contractor Profile");
         Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
         if (sessionContractor == null) {
             return "redirect:/contractor/login";
@@ -35,7 +35,7 @@ public class ProfileController {
 
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String name, @RequestParam String mobile, HttpSession session) {
-
+        System.out.println("[Button clicked]:- Update Profile");
         Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
         if (sessionContractor == null) {
             return "redirect:/contractor/login";
@@ -55,6 +55,7 @@ public class ProfileController {
 
     @GetMapping("/contractor/change-password")
     public String changePasswordPage(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Change Password");
         Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
         if (sessionContractor == null) {
             return "redirect:/contractor/login";
@@ -67,6 +68,7 @@ public class ProfileController {
     @PostMapping("/contractor/update-password")
     @org.springframework.web.bind.annotation.ResponseBody
     public org.springframework.http.ResponseEntity<?> updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session) {
+        System.out.println("[Button clicked]:- Update Password");
         Contractor sessionContractor = (Contractor) session.getAttribute("loggedInContractor");
         if (sessionContractor == null) return org.springframework.http.ResponseEntity.status(401).body(java.util.Map.of("status", "error", "message", "Unauthorized"));
 

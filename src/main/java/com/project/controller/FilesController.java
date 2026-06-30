@@ -78,6 +78,7 @@ public class FilesController {
     
     @PostMapping("/contractor/upload")
     public String uploadFile(@RequestParam("file") MultipartFile file, HttpSession session) {
+        System.out.println("[Button clicked]:- Upload File");
         List<List<String>> data = excelService.parseExcel(file);
         session.setAttribute("excelData", data);
 
@@ -137,6 +138,7 @@ public class FilesController {
     
     @GetMapping("/contractor/files")
     public String reports(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Files");
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("files", fileRepo.findByContractorId(contractorId));
         System.out.println("[INFO] Files Page Visited");
@@ -146,6 +148,7 @@ public class FilesController {
     @PostMapping("/contractor/save-columns-and-config")
     @ResponseBody
     public String saveColumnsAndConfig(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
+        System.out.println("[Button clicked]:- Save Columns and Config");
         Object fileIdObj = payload.get("fileId");
         if (fileIdObj == null) return "Error: Missing fileId";
         
@@ -219,6 +222,7 @@ public class FilesController {
     
     @PostMapping("/contractor/save-data")
     public String saveData(HttpSession session) {
+        System.out.println("[Button clicked]:- Save Data");
         List<List<String>> data = (List<List<String>>) session.getAttribute("processedData");
         Long fileId = (Long) session.getAttribute("fileId");
         Long configId = (Long) session.getAttribute("configId");
@@ -372,6 +376,7 @@ public class FilesController {
     
     @GetMapping("/contractor/columns")
     public String columns(@RequestParam Long fileId, Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Columns");
         Long contractorId = getCurrentContractorId(session);
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
         
@@ -399,6 +404,7 @@ public class FilesController {
     
     @GetMapping("/contractor/preview")
     public String preview(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Preview");
         Long fileId = (Long) session.getAttribute("fileId");
         Long contractorId = getCurrentContractorId(session);
         UploadedFiles file = fileRepo.findById(fileId).orElse(null);
@@ -478,6 +484,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
     @GetMapping("/contractor/delete-file/{id}")
     public String deleteFile(@PathVariable Long id, HttpSession session) {
+        System.out.println("[Button clicked]:- Delete File");
         Long contractorId = getCurrentContractorId(session);
         UploadedFiles file = fileRepo.findById(id).orElse(null);
         if (file != null && contractorId != null && contractorId.equals(file.getContractorId())) {
@@ -498,6 +505,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
     @GetMapping("/contractor/configurations")
     public String configurations(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Configuration");
         Long contractorId = getCurrentContractorId(session);
         model.addAttribute("configurations", configRepo.findByContractorId(contractorId));
         model.addAttribute("uploadedFiles", fileRepo.findByContractorId(contractorId));
@@ -508,6 +516,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
     @ResponseBody
     @Transactional
     public String saveConfiguration(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
+        System.out.println("[Button clicked]:- Save Configuration");
         Long contractorId = getCurrentContractorId(session);
         Object idObj = payload.get("id");
         Long id = (idObj != null) ? Long.valueOf(idObj.toString()) : null;
@@ -583,6 +592,7 @@ System.out.println("[INFO] Report Page Visited "+getTime());
     @GetMapping("/contractor/delete-configuration/{id}")
     @Transactional
     public String deleteConfiguration(@PathVariable Long id, HttpSession session) {
+        System.out.println("[Button clicked]:- Delete Configuration");
         Long contractorId = getCurrentContractorId(session);
         ReportConfiguration config = configRepo.findById(id).orElse(null);
         if (config != null && config.getContractorId().equals(contractorId)) {

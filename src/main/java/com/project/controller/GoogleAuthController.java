@@ -28,6 +28,7 @@ public class GoogleAuthController {
             Authentication authentication,
             HttpSession session) {
 
+        System.out.println("[Button clicked]:- Google Login");
         OAuth2User oauthUser =
                 (OAuth2User) authentication.getPrincipal();
 

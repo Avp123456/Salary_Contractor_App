@@ -93,6 +93,7 @@ public class PaymentsController {
 
     @GetMapping("/contractor/payments")
     public String payments(Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Payments");
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
         if (contractor == null) return "redirect:/contractor/login";
         Long contractorId = contractor.getContractorId();
@@ -247,6 +248,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
     @GetMapping("/contractor/get-payment-details")
     @ResponseBody
     public java.util.Map<String, Object> getPaymentDetails(@RequestParam Long id, HttpSession session) {
+        System.out.println("[Button clicked]:- View Payment Details");
         Long contractorId = getCurrentContractorId(session);
         UploadedFileData data = dataRepo.findById(id).orElse(null);
         if (data == null || !data.getContractorId().equals(contractorId)) return null;
@@ -318,6 +320,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
     @PostMapping("/contractor/update-payment-data")
     @ResponseBody
     public String updatePaymentData(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
+        System.out.println("[Button clicked]:- Update Payment Data");
         Long contractorId = getCurrentContractorId(session);
         Long id = Long.valueOf(payload.get("id").toString());
         UploadedFileData data = dataRepo.findById(id).orElse(null);
@@ -338,6 +341,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
     @PostMapping("/contractor/update-payment-status")
     @ResponseBody
     public String updatePaymentStatus(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
+        System.out.println("[Button clicked]:- Update Payment Status");
         Long contractorId = getCurrentContractorId(session);
         Long id = Long.valueOf(payload.get("id").toString());
         String status = payload.get("status").toString();
@@ -356,6 +360,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
     @PostMapping("/contractor/generate-payslip")
     @ResponseBody
     public String generatePayslipEndpoint(@RequestBody java.util.Map<String, Object> payload, HttpSession session) {
+        System.out.println("[Button clicked]:- Generate Payslip");
         Long contractorId = getCurrentContractorId(session);
         Long id = Long.valueOf(payload.get("id").toString());
         
@@ -371,6 +376,7 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
 
     @GetMapping("/contractor/payslip/{id}")
     public String viewPayslip(@PathVariable Long id, Model model, HttpSession session) {
+        System.out.println("[Page Visited]:- Contractor Payslip");
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
         if (contractor == null) return "redirect:/contractor/login";
         Long contractorId = contractor.getContractorId();

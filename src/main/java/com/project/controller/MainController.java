@@ -38,6 +38,7 @@ public class MainController {
 
 	@GetMapping("/contractor/login")
 	public String contractorLoginPage(Model model, HttpSession session) {
+		System.out.println("[Page Visited]:- Login");
 		System.out.println("[INFO] Contractor Login Page Visited  "+getTime() );
 		session.setAttribute("oauth2_role", "CONTRACTOR");
 		model.addAttribute("loginAction", "/contractor/login");
@@ -47,6 +48,7 @@ public class MainController {
 
 	@GetMapping("/employee/login")
 	public String employeeLoginPage(Model model, HttpSession session) {
+		System.out.println("[Page Visited]:- Login");
 		System.out.println("[INFO] Employee Login Page Visited  "+getTime() );
 		session.setAttribute("oauth2_role", "EMPLOYEE");
 		model.addAttribute("loginAction", "/employee/login");
@@ -62,6 +64,7 @@ public class MainController {
 			Model model,
 			HttpSession session) {
 
+		System.out.println("[Button clicked]:- Submit");
 		System.out.println("[ACTION] Contractor login attempt");
 		Contractor contractor = contractorService.login(email, password);
 
@@ -90,6 +93,7 @@ public class MainController {
 			Model model,
 			HttpSession session) {
 
+		System.out.println("[Button clicked]:- Submit");
 		Employee employee = employeeService.login(email, password);
 
 		if (employee != null) {
@@ -112,6 +116,7 @@ public class MainController {
 
 	@GetMapping("/logout")
 	public String logout(HttpSession session) {
+		System.out.println("[Button clicked]:- Logout");
 		session.invalidate();
 		System.out.println("[INFO] Contractor Logged Out  "+ getTime());
 		return "redirect:/?logout";
@@ -141,6 +146,7 @@ public class MainController {
 
 	@GetMapping("/register")
 	public String registerPage() {
+		System.out.println("[Page Visited]:- Register");
 		return "register";
 	}
 
@@ -152,6 +158,7 @@ public class MainController {
 			Model model,
 			HttpSession session) {
 
+		System.out.println("[Button clicked]:- Submit");
 		// Check if email already exists
 		if (contractorService.findByEmail(email) != null) {
 			model.addAttribute("error", "Email already registered!");
@@ -176,6 +183,7 @@ public class MainController {
 
 	@GetMapping("/verify-otp")
 	public String verifyOtpPage(HttpSession session, Model model) {
+		System.out.println("[Page Visited]:- Verify OTP");
 		String email = (String) session.getAttribute("reg_email");
 		Boolean visited = (Boolean) session.getAttribute("otp_page_visited");
 
@@ -195,6 +203,7 @@ public class MainController {
 
 	@PostMapping("/verify-otp")
 	public String verifyOtp(@RequestParam String otp, HttpSession session, Model model) {
+		System.out.println("[Button clicked]:- Submit");
 		String name = (String) session.getAttribute("reg_name");
 		String email = (String) session.getAttribute("reg_email");
 		String password = (String) session.getAttribute("reg_password");
@@ -227,6 +236,7 @@ public class MainController {
 
 	@GetMapping("/resend-otp")
 	public String resendOtp(HttpSession session, Model model) {
+		System.out.println("[Button clicked]:- Resend OTP");
 		String email = (String) session.getAttribute("reg_email");
 		String name = (String) session.getAttribute("reg_name");
 		if (email == null) {
