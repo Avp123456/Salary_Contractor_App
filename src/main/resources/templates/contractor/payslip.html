@@ -160,7 +160,19 @@
     <div class="action-buttons" data-html2canvas-ignore="true">
         <button onclick="downloadPDF()" class="btn btn-download">Download PDF</button>
         <button onclick="sharePayslip()" class="btn btn-share">Share</button>
+        <button onclick="sendWhatsapp()" class="btn" style="background: #25D366;">Send WhatsApp</button>
+        <button onclick="history.back()" class="btn" style="background: #ef4444;">Cancel</button>
     </div>
+
+    <!-- Hidden form to submit to the backend for WhatsApp sending -->
+    <form id="whatsappForm" action="/send-whatsapp-payslip" method="POST" style="display: none;">
+        <input type="hidden" name="employeeName" th:value="${employeeName}" />
+        <input type="hidden" name="phoneNumber" th:value="${employeeMobileNo}" />
+        <input type="hidden" name="month" th:value="${monthYearUi}" />
+        <input type="hidden" name="totalEarning" th:value="${totalEarnings}" />
+        <input type="hidden" name="totalDeduction" th:value="${totalDeductions}" />
+        <input type="hidden" name="netPayment" th:value="${totalAmount}" />
+    </form>
 
     <script>
         function downloadPDF() {
@@ -225,6 +237,52 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 console.error("Error generating PDF:", err);
+            });
+        }
+
+        function sendWhatsapp() {
+            var phoneNumber = document.querySelector('input[name="phoneNumber"]').value;
+            if (!phoneNumber || phoneNumber.trim() === 'null' || phoneNumber.trim() === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Phone Number',
+                    text: 'This employee does not have a registered phone number.'
+                });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Sending...',
+                text: 'Please wait while we send the WhatsApp message.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Submit the form
+            const form = document.getElementById('whatsappForm');
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sent!',
+                    text: 'WhatsApp message has been sent successfully.'
+                });
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to send WhatsApp message.'
+                });
+                console.error('Error:', error);
             });
         }
     </script>

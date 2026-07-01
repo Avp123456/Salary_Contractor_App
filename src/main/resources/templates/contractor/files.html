@@ -204,6 +204,7 @@
                     <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#uploadModal"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="fileError" class="text-danger small mb-3" style="display: none; font-weight: 500;">no file selected</div>
                     <form action="/contractor/upload" method="post" enctype="multipart/form-data">
                         <div class="mb-4">
                             <label class="form-label text-muted small fw-bold">Select Excel File</label>
@@ -263,12 +264,15 @@
     <script>
         function validateAndUpload(form) {
             const fileInput = document.getElementById('excelFile');
+            const fileError = document.getElementById('fileError');
             const file = fileInput.files[0];
             
             if (!file) {
-                form.submit();
+                fileError.style.display = 'block';
                 return;
             }
+
+            if (fileError) fileError.style.display = 'none';
 
             const fileName = file.name;
             const extension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();

@@ -30,7 +30,8 @@ public class SecurityConfig {
                         "/css/**",
                         "/js/**",
                         "/oauth2/**",
-                        "/error"
+                        "/error",
+                        "/send"
                 ).permitAll()
 
                 .anyRequest().authenticated()

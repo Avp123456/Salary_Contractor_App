@@ -477,13 +477,16 @@ System.out.println("[INFO] Payments Page Visited "+getTime());
 
         totalAmount = totalEarnings - totalDeductions;
 
-        if (employeeName.isEmpty() && !employeeCode.isEmpty()) {
+        if (!employeeCode.isEmpty()) {
             final String finalEmployeeCode = employeeCode;
             Employee emp = employeeService.getByContractor(contractor).stream()
                 .filter(e -> finalEmployeeCode.equalsIgnoreCase(e.getEmpCode()))
                 .findFirst()
                 .orElse(null);
-            if (emp != null) employeeName = emp.getName();
+            if (emp != null) {
+                if (employeeName.isEmpty()) employeeName = emp.getName();
+                model.addAttribute("employeeMobileNo", emp.getMobileNo());
+            }
         }
 
         model.addAttribute("contractorName", contractor.getName());
