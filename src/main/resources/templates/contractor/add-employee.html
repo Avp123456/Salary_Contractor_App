@@ -184,7 +184,8 @@
         <hr>
 
         <div class="d-flex justify-content-end gap-2">
-          <a href="/contractor/employees" class="btn-cancel">Cancel</a>
+          <a th:if="${source == 'payments'}" href="/contractor/payments" class="btn-cancel">Cancel</a>
+          <a th:unless="${source == 'payments'}" href="/contractor/employees" class="btn-cancel">Cancel</a>
           <button type="submit" class="btn-save">
             <span th:text="${employee.employeeId != null ? 'Update' : 'Save'}"></span>
           </button>

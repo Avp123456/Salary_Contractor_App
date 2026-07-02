@@ -20,6 +20,10 @@ import com.project.entity.UploadedFiles;
 import com.project.repository.UploadedFileColumnsRepository;
 import com.project.repository.UploadedFileDataRepository;
 import com.project.repository.UploadedFileRepository;
+import com.project.repository.ReportConfigurationRepository;
+import com.project.repository.ReportConfigurationFileRepository;
+import com.project.entity.ReportConfiguration;
+import com.project.entity.ReportConfigurationFile;
 import com.project.service.EmployeeService;
 
 import javax.servlet.http.HttpSession;
@@ -42,6 +46,13 @@ public class PaymentsController {
     
     @Autowired
     private EmployeeService employeeService;
+    
+    @Autowired
+    private ReportConfigurationRepository configRepo;
+    
+    @Autowired
+    private ReportConfigurationFileRepository configFileRepo;
+
     private Long getCurrentContractorId(HttpSession session) {
         Contractor contractor = (Contractor) session.getAttribute("loggedInContractor");
         return (contractor != null) ? contractor.getContractorId() : null;
@@ -159,12 +170,36 @@ public class PaymentsController {
                 String idGetter = "get" + idCol.getActualColumn().substring(0, 1).toUpperCase() + idCol.getActualColumn().substring(1);
                 String salaryGetter = "get" + salaryCol.getActualColumn().substring(0, 1).toUpperCase() + salaryCol.getActualColumn().substring(1);
 
-                String extractedMonthYear = extractMonthYearFromFileName(file.getFileName());
-                if (extractedMonthYear == null) {
-                    extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate());
+                java.util.List<String> targetMonthYears = new java.util.ArrayList<>();
+                
+                // Try to get month from configuration first
+                List<ReportConfigurationFile> configFiles = configFileRepo.findByFileName(file.getFileName());
+                if (configFiles != null && !configFiles.isEmpty()) {
+                    for (ReportConfigurationFile rcf : configFiles) {
+                        ReportConfiguration config = configRepo.findById(rcf.getConfigId()).orElse(null);
+                        if (config != null && config.getMonth() != null && !config.getMonth().isEmpty()) {
+                            String mY = config.getMonth();
+                            if (config.getYear() != null) {
+                                mY += " " + config.getYear();
+                            }
+                            if (!targetMonthYears.contains(mY)) {
+                                targetMonthYears.add(mY);
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback to extraction
+                if (targetMonthYears.isEmpty()) {
+                    String extractedMonthYear = extractMonthYearFromFileName(file.getFileName());
+                    if (extractedMonthYear == null) {
+                        extractedMonthYear = java.time.format.DateTimeFormatter.ofPattern("MMM-yyyy").format(file.getUploadDate());
+                    }
+                    targetMonthYears.add(extractedMonthYear);
                 }
 
-                for (UploadedFileData row : fileRows) {
+                for (String extractedMonthYear : targetMonthYears) {
+                    for (UploadedFileData row : fileRows) {
                     try {
                         java.lang.reflect.Method mId = UploadedFileData.class.getMethod(idGetter);
                         Object idVal = mId.invoke(row);
@@ -193,8 +228,19 @@ public class PaymentsController {
                                 } catch (Exception e) {}
                             }
                             
+                            if (!empNameInFile.isEmpty()) {
+                                String[] words = empNameInFile.toLowerCase().split("\\s+");
+                                StringBuilder titleCaseName = new StringBuilder();
+                                for (String word : words) {
+                                    if (word.length() > 0) {
+                                        titleCaseName.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
+                                    }
+                                }
+                                empNameInFile = titleCaseName.toString().trim();
+                            }
+                            
                             if (match != null) {
-                                p.put("name", match.getName());
+                                p.put("name", !empNameInFile.isEmpty() ? empNameInFile : match.getName());
                                 p.put("registered", true);
                             } else {
                                 p.put("name", !empNameInFile.isEmpty() ? empNameInFile : "Not Registered");
@@ -220,8 +266,18 @@ public class PaymentsController {
                         e.printStackTrace();
                     }
                 }
+                } // End outer targetMonthYears loop
             }
         }
+
+        java.util.Map<String, java.util.Map<String, Object>> uniquePayments = new java.util.HashMap<>();
+        for (java.util.Map<String, Object> p : paymentList) {
+            String key = p.get("empCode") + "_" + p.get("monthYear") + "_" + p.get("amount");
+            if (!uniquePayments.containsKey(key)) {
+                uniquePayments.put(key, p);
+            }
+        }
+        paymentList = new java.util.ArrayList<>(uniquePayments.values());
 
         paymentList.sort((p1, p2) -> {
             Boolean r1 = (Boolean) p1.get("registered");
@@ -241,6 +297,21 @@ public class PaymentsController {
         });
 
         model.addAttribute("payments", paymentList);
+        
+        java.util.Set<String> availableMonthYears = new java.util.HashSet<>();
+        
+        for (java.util.Map<String, Object> p : paymentList) {
+            String monthYearStr = (String) p.get("monthYear");
+            if (monthYearStr != null && !monthYearStr.isEmpty()) {
+                availableMonthYears.add(monthYearStr.toUpperCase());
+            }
+        }
+        
+        java.util.List<String> monthYearList = new java.util.ArrayList<>(availableMonthYears);
+        java.util.Collections.sort(monthYearList); // Sort alphabetically, or parse date? Simple string sort for now.
+        
+        model.addAttribute("availableMonthYears", monthYearList);
+        
 System.out.println("[INFO] Payments Page Visited "+getTime());
         return "contractor/payments";
     }

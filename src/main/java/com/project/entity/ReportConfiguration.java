@@ -14,6 +14,8 @@ public class ReportConfiguration {
 
     private Long contractorId;
     private String configName;
+    private String month;
+    private Integer year;
     private Integer headerCount;
     private Integer trailerCount;
     private Integer totalPayableColumn;
@@ -48,6 +50,22 @@ public class ReportConfiguration {
 
     public void setConfigName(String configName) {
         this.configName = configName;
+    }
+
+    public String getMonth() {
+        return month;
+    }
+
+    public void setMonth(String month) {
+        this.month = month;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
     }
 
     public Integer getHeaderCount() {

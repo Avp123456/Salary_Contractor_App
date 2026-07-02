@@ -56,6 +56,7 @@
         .pagination-btn svg { fill: currentColor; stroke: none; }
         .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
         .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-action-small { padding: 3px 8px !important; font-size: 12px !important; line-height: 1.2; }
     </style>
 </head>
 <body>
@@ -73,6 +74,8 @@
                     <thead>
                         <tr>
                             <th>Configuration</th>
+                            <th>Month</th>
+                            <th>Year</th>
                             <th>File(s)</th>
                             <th>Mappings</th>
                             <th>Last updated</th>
@@ -82,17 +85,19 @@
                     <tbody id="configTableBody">
                         <tr th:each="config : ${configurations}" class="config-row-item">
                             <td th:text="${config.configName}" class="fw-medium"></td>
+                            <td th:text="${config.month}"></td>
+                            <td th:text="${config.year}"></td>
                             <td th:text="${config.filesCount}"></td>
                             <td th:text="${config.mappingsCount}"></td>
                             <td th:text="${config.lastUpdated != null ? #temporals.format(config.lastUpdated, 'dd MMM yyyy, hh:mm a') : 'N/A'}"></td>
                             <td class="text-center">
-                                <button class="btn btn-outline-info btn-sm px-3 me-1" th:onclick="'previewConfig(' + ${config.id} + ')'">Preview</button>
-                                <button class="btn btn-outline-primary btn-sm px-3 me-1" th:onclick="'showEditModal(' + ${config.id} + ')'">Edit</button>
-                                <button class="btn btn-outline-danger btn-sm px-3" th:onclick="'deleteConfig(' + ${config.id} + ')'">Delete</button>
+                                <button class="btn btn-outline-info btn-action-small me-1" th:onclick="'previewConfig(' + ${config.id} + ')'">Preview</button>
+                                <button class="btn btn-outline-primary btn-action-small me-1" th:onclick="'showEditModal(' + ${config.id} + ')'">Edit</button>
+                                <button class="btn btn-outline-danger btn-action-small" th:onclick="'deleteConfig(' + ${config.id} + ')'">Delete</button>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(configurations)}" id="noConfigRow">
-                            <td colspan="5" class="text-center py-4 text-muted">No saved configurations found.</td>
+                            <td colspan="7" class="text-center py-4 text-muted">No saved configurations found.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -127,10 +132,44 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="editConfigNote" class="alert alert-info d-none mb-3" style="font-size: 0.9rem; border-radius: 8px;">
+                        <strong>Note:</strong> If you are updating an existing configuration for the same month and year, you do not need to change the configuration name. However, if you change the selected Month or Year, the system will save this as a new configuration, and you must provide a unique configuration name.
+                    </div>
                     <input type="hidden" id="configId">
-                    <div class="mb-3">
-                        <label class="form-label">Configuration Name</label>
-                        <input type="text" id="configName" class="form-control">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Configuration Name</label>
+                            <input type="text" id="configName" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Month</label>
+                            <select id="configMonth" class="form-select">
+                                <option value="">Select Month</option>
+                                <option value="JANUARY">January</option>
+                                <option value="FEBRUARY">February</option>
+                                <option value="MARCH">March</option>
+                                <option value="APRIL">April</option>
+                                <option value="MAY">May</option>
+                                <option value="JUNE">June</option>
+                                <option value="JULY">July</option>
+                                <option value="AUGUST">August</option>
+                                <option value="SEPTEMBER">September</option>
+                                <option value="OCTOBER">October</option>
+                                <option value="NOVEMBER">November</option>
+                                <option value="DECEMBER">December</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Year</label>
+                            <select id="configYear" class="form-select">
+                                <option value="">Select Year</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
@@ -403,12 +442,15 @@
         function showCreateModal() {
             document.getElementById('configId').value = '';
             document.getElementById('configName').value = '';
+            document.getElementById('configMonth').value = '';
+            document.getElementById('configYear').value = '';
             fileConfigsData = [];
             addNewFileConfigRow();
 
             columnsData = [];
             columnCurrentPage = 1;
             document.querySelector('#configModal .modal-title').innerText = 'New Configuration';
+            document.getElementById('editConfigNote').classList.add('d-none');
             addNewColumnRow();
             modal.show();
         }
@@ -420,6 +462,8 @@
                     if (!data) return;
                     document.getElementById('configId').value = id;
                     document.getElementById('configName').value = data.configName || '';
+                    document.getElementById('configMonth').value = data.month || '';
+                    document.getElementById('configYear').value = data.year || '';
                     
                     if (data.fileConfigs && data.fileConfigs.length > 0) {
                         data.fileConfigs.forEach(fc => {
@@ -449,6 +493,7 @@
                     renderFileConfigs();
                     
                     document.querySelector('#configModal .modal-title').innerText = 'Edit Configuration';
+                    document.getElementById('editConfigNote').classList.remove('d-none');
                     
                     columnsData = data.columns.map(col => ({
                         fileType: col.fileType || 'Regular File',
@@ -659,10 +704,22 @@
             
             const id = document.getElementById('configId').value;
             const configName = document.getElementById('configName').value.trim();
+            const configMonth = document.getElementById('configMonth').value;
+            const configYear = document.getElementById('configYear').value;
 
             if (!configName) {
                 showErrorToast('Configuration name is mandatory.');
                 highlightError('#configName');
+                return;
+            }
+            if (!configMonth) {
+                showErrorToast('Month is mandatory.');
+                highlightError('#configMonth');
+                return;
+            }
+            if (!configYear) {
+                showErrorToast('Year is mandatory.');
+                highlightError('#configYear');
                 return;
             }
             
@@ -741,6 +798,8 @@
             const data = {
                 id: id ? parseInt(id) : null,
                 configName: configName,
+                month: configMonth,
+                year: parseInt(configYear),
                 fileConfigs: fileConfigsData.map(fc => ({
                     fileName: fc.fileName,
                     headerCount: parseInt(fc.headerCount) || 0,

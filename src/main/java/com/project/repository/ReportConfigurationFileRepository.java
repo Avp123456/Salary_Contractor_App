@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface ReportConfigurationFileRepository extends JpaRepository<ReportConfigurationFile, Long> {
     List<ReportConfigurationFile> findByConfigId(Long configId);
+    List<ReportConfigurationFile> findByFileName(String fileName);
     void deleteByConfigId(Long configId);
 }

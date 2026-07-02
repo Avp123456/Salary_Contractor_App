@@ -9,6 +9,17 @@
     <style>
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
         .container { max-width: 1200px; margin-top: 50px; }
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contractor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
+        .container { max-width: 1200px; margin-top: 50px; }
         .section { margin-top: 30px; }
         .card { border: none; border-radius: 16px; transition: transform 0.2s; overflow: hidden; }
         .card:hover { transform: translateY(-5px); }
@@ -17,8 +28,35 @@
         .bg-gradient-employees { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; }
         .bg-gradient-salary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .bg-gradient-files { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 10px 15px rgba(0,0,0,0.03);
+            padding: 24px;
+            margin-bottom: 24px;
+            height: 100%;
+        }
+        .dashboard-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 20px;
+        }
+        
+        .earner-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .earner-item:last-child { border-bottom: none; }
+        .earner-name { font-weight: 600; color: #1e293b; }
+        .earner-amount { font-weight: 700; color: #10b981; }
     </style>
 <link href="/css/global-theme.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -26,37 +64,162 @@
     
     <div class="container">
         <div id="dashboard" class="section">
-            <div class="row g-4">
+            <div class="d-flex justify-content-center flex-wrap gap-4">
 
-                <!-- Total Records -->
-                <div class="col-md-4">
-                    <div class="card p-4 text-center bg-gradient-employees shadow-sm">
-                        <div class="stat-label">Total Processed Records</div>
-                        <h2 class="stat-value" th:text="${totalEmployees}">0</h2>
+                <!-- Registration Status -->
+                <div style="min-width: 280px; flex: 0 1 auto;">
+                    <div class="card px-3 text-center bg-gradient-employees shadow-sm" 
+                         style="padding-top: 10px; padding-bottom: 10px; cursor: pointer;"
+                         onclick="window.location.href='/contractor/add-employee'"
+                         data-bs-toggle="tooltip" data-bs-placement="top" title="Click here to register a new employee">
+                        <div class="stat-label">Registered / Total Processed</div>
+                        <h2 class="stat-value">
+                            <span th:text="${registeredCount}">0</span> 
+                            <span style="font-size: 1.5rem; opacity: 0.8; font-weight: 500;">/</span> 
+                            <span th:text="${totalEmployees}">0</span>
+                        </h2>
                     </div>
                 </div>
 
                 <!-- Total Salary -->
-                <div class="col-md-4">
-                    <div class="card p-4 text-center bg-gradient-salary shadow-sm">
+                <div style="min-width: 280px; flex: 0 1 auto;">
+                    <div class="card px-3 text-center bg-gradient-salary shadow-sm" 
+                         style="padding-top: 10px; padding-bottom: 10px; cursor: pointer;"
+                         onclick="window.location.href='/contractor/payments'"
+                         data-bs-toggle="tooltip" data-bs-placement="top" title="Click here to view all employees salary overview">
                         <div class="stat-label">Total Salary Amount</div>
                         <h2 class="stat-value" th:text="'&#8377;' + ${#numbers.formatDecimal(totalSalary, 1, 'COMMA', 2, 'POINT')}">&#8377;0</h2>
                     </div>
                 </div>
 
                 <!-- Total Files -->
-                <div class="col-md-4">
-                    <div class="card p-4 text-center bg-gradient-files shadow-sm">
+                <div style="min-width: 280px; flex: 0 1 auto;">
+                    <div class="card px-3 text-center bg-gradient-files shadow-sm" 
+                         style="padding-top: 10px; padding-bottom: 10px; cursor: pointer;"
+                         onclick="window.location.href='/contractor/files'"
+                         data-bs-toggle="tooltip" data-bs-placement="top" title="Click here to see uploaded files">
                         <div class="stat-label">Total Uploaded Files</div>
                         <h2 class="stat-value" th:text="${totalFiles}">0</h2>
                     </div>
                 </div>
 
             </div>
+
+            <!-- Charts Row -->
+            <div class="row mt-4 g-4">
+                <div class="col-lg-12">
+                    <div class="dashboard-card">
+                        <h4 class="dashboard-card-title text-center"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Monthly Salary Disbursement</h4>
+                        <div class="d-flex justify-content-center w-100">
+                            <div id="chartContainer" style="width: 100%; transition: all 0.3s ease;">
+                                <canvas id="monthlyTrendChart" style="max-height: 220px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
         </div>
     </div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // Data from Controller
+        const labels = /*[[${chartLabels}]]*/ [];
+        const dataValues = /*[[${chartData}]]*/ [];
+        
+        const registeredCount = /*[[${registeredCount}]]*/ 0;
+        const notRegisteredCount = /*[[${notRegisteredCount}]]*/ 0;
+
+        // 1. Monthly Trends Bar Chart
+        if(document.getElementById('monthlyTrendChart')) {
+            
+            // Adjust chart container width dynamically
+            const chartContainer = document.getElementById('chartContainer');
+            if (chartContainer && labels.length > 0) {
+                // If there are less than 6 months, constrain the width to keep bars centered and properly sized
+                if (labels.length < 6) {
+                    const widthPerBar = 120; // px
+                    chartContainer.style.maxWidth = Math.max((labels.length * widthPerBar) + 100, 200) + 'px';
+                }
+            }
+            
+            const ctxBar = document.getElementById('monthlyTrendChart').getContext('2d');
+            
+            // Create gradient
+            let gradient = ctxBar.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.8)');   
+            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.2)');
+
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['No Data'],
+                    datasets: [{
+                        label: 'Total Payout (₹)',
+                        data: dataValues.length > 0 ? dataValues : [0],
+                        backgroundColor: gradient,
+                        borderColor: '#2563eb',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        barPercentage: 0.6,
+                        maxBarThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 12,
+                            titleFont: { family: 'Inter', size: 14 },
+                            bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                            callbacks: {
+                                label: function(context) {
+                                    return '₹' + context.parsed.y.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [4, 4], color: '#e2e8f0' },
+                            ticks: {
+                                font: { family: 'Inter' },
+                                callback: function(value) {
+                                    if (value >= 100000) return '₹' + (value / 100000).toFixed(1) + 'L';
+                                    if (value >= 1000) return '₹' + (value / 1000).toFixed(1) + 'k';
+                                    return '₹' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    /*]]>*/
+</script>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
-

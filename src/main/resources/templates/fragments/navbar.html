@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -52,6 +52,37 @@
         }
     }
     
+    /* Dropdown UI Enhancement */
+    .dropdown-menu {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 8px;
+        min-width: 180px;
+        animation: fadeIn 0.2s ease-out;
+    }
+    .dropdown-item {
+        border-radius: 8px;
+        padding: 8px 16px;
+        color: #475569;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        margin-bottom: 2px;
+    }
+    .dropdown-item:last-child {
+        margin-bottom: 0;
+    }
+    .dropdown-item:hover, .dropdown-item:focus {
+        background-color: #f8fafc;
+        color: #f97316;
+        transform: translateX(4px);
+    }
+    .dropdown-item.active, .dropdown-item:active {
+        background-color: #fff7ed;
+        color: #ea580c !important;
+        font-weight: 600;
+    }
     
 </style>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -60,7 +91,7 @@
 
 <body>
 
-<!-- âœ… NAVBAR FRAGMENT -->
+<!-- ✅ NAVBAR FRAGMENT -->
 <div th:fragment="navbar(pageTitle)" class="sticky-top" style="z-index: 1020;">
 
 <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e6f0f9;">
@@ -158,4 +189,3 @@
 
 </body>
 </html>
-

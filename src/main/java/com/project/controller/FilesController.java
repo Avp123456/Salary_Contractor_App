@@ -515,6 +515,8 @@ System.out.println("[INFO] Report Page Visited "+getTime());
             Map<String, Object> map = new HashMap<>();
             map.put("id", config.getId());
             map.put("configName", config.getConfigName());
+            map.put("month", config.getMonth());
+            map.put("year", config.getYear());
             map.put("lastUpdated", config.getLastUpdated());
             map.put("filesCount", configFileRepo.findByConfigId(config.getId()).size());
             map.put("mappingsCount", configColRepo.findByConfigId(config.getId()).size());
@@ -536,20 +538,53 @@ System.out.println("[INFO] Report Page Visited "+getTime());
         Long id = (idObj != null) ? Long.valueOf(idObj.toString()) : null;
         
         String name = payload.get("configName").toString();
+        Object monthObj = payload.get("month");
+        String month = monthObj != null ? monthObj.toString() : null;
+        Object yearObj = payload.get("year");
+        Integer year = yearObj != null ? Integer.valueOf(yearObj.toString()) : null;
         List<java.util.Map<String, Object>> columns = (List<java.util.Map<String, Object>>) payload.get("columns");
         List<java.util.Map<String, Object>> fileConfigs = (List<java.util.Map<String, Object>>) payload.get("fileConfigs");
 
-        ReportConfiguration config;
+        ReportConfiguration config = null;
+        boolean isSaveAs = false;
+        
         if (id != null) {
-            config = configRepo.findById(id).orElse(new ReportConfiguration());
-            configColRepo.deleteByConfigId(id);
-            configFileRepo.deleteByConfigId(id);
+            ReportConfiguration existingConfig = configRepo.findById(id).orElse(null);
+            if (existingConfig != null) {
+                boolean monthChanged = existingConfig.getMonth() != null ? !existingConfig.getMonth().equals(month) : month != null;
+                boolean yearChanged = existingConfig.getYear() != null ? !existingConfig.getYear().equals(year) : year != null;
+                
+                if (monthChanged || yearChanged) {
+                    isSaveAs = true;
+                    config = new ReportConfiguration();
+                } else {
+                    config = existingConfig;
+                }
+            } else {
+                config = new ReportConfiguration();
+            }
         } else {
             config = new ReportConfiguration();
         }
 
+        List<ReportConfiguration> existingConfigs = configRepo.findByContractorIdAndConfigName(contractorId, name);
+        if (!existingConfigs.isEmpty()) {
+            // If it's a new config (id == null) OR it's a Save-As operation, ANY existing name is a clash.
+            // If it's a standard update, it's a clash only if the existing config is a DIFFERENT id.
+            if (id == null || isSaveAs || !existingConfigs.get(0).getId().equals(id)) {
+                return "Configuration with this name already exists.";
+            }
+        }
+        
+        if (id != null && !isSaveAs && config.getId() != null) {
+            configColRepo.deleteByConfigId(config.getId());
+            configFileRepo.deleteByConfigId(config.getId());
+        }
+
         config.setContractorId(contractorId);
         config.setConfigName(name);
+        config.setMonth(month);
+        config.setYear(year);
         configRepo.save(config);
 
         if (fileConfigs != null) {
@@ -594,6 +629,8 @@ System.out.println("[INFO] Report Page Visited "+getTime());
 
         java.util.Map<String, Object> res = new java.util.HashMap<>();
         res.put("configName", config.getConfigName());
+        res.put("month", config.getMonth());
+        res.put("year", config.getYear());
         
         List<ReportConfigurationFile> fileConfigs = configFileRepo.findByConfigId(id);
         res.put("fileConfigs", fileConfigs);

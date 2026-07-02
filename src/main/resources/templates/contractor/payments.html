@@ -13,7 +13,7 @@
         .table th { font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 0.05em; padding: 0.4rem 10px; border: none; cursor: pointer; user-select: none; transition: background-color 0.2s; white-space: nowrap; }
         .table th:hover { background-color: #bfdbfe !important; }
         .table tbody tr { height: 35px; }
-        .table td { padding: 1px 10px; font-size: 15px; height: 17px; line-height: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .table td { padding: 4px 10px; font-size: 13px; height: 17px; line-height: 1.4; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
         .table tbody tr:hover td { background-color: #eff6ff !important; color: #1e3a5f; }
         .badge-pending { background-color: #fef3c7; color: #92400e; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; }
         .btn-action-small { padding: 3px 8px !important; font-size: 13px !important; line-height: 1.2; }
@@ -129,8 +129,14 @@
 
     <div class="container" style="margin-top: 20px;">
         <!-- Toolbar section for Global Search -->
-        <div class="d-flex justify-content-end mb-3">
-            <div class="search-wrapper-global" style="width: 350px;">
+        <div class="d-flex justify-content-end mb-3 gap-2" style="height: 44px;">
+            <div style="width: 220px; height: 100%;">
+                <select id="monthYearFilter" class="form-select" onchange="filterTableGlobal()" style="border-radius: 20px; padding: 10px 15px; height: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; font-size: 0.95rem; color: #475569;">
+                    <option value="">Select Month & Year</option>
+                    <option th:each="my : ${availableMonthYears}" th:value="${my}" th:text="${my.substring(0,1) + my.substring(1).toLowerCase()}"></option>
+                </select>
+            </div>
+            <div class="search-wrapper-global" style="width: 350px; height: 100%;">
                 <i class="bi bi-search"></i>
                 <input type="text" id="globalSearchInput" class="form-control" placeholder="Search by Employee ID, Name or Amount..." oninput="filterTableGlobal()">
             </div>
@@ -141,20 +147,20 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 80px;" onclick="sortTable(0)" class="sortable">
+                            <th style="width: 70px;" onclick="sortTable(0)" class="sortable">
                                 SR NO. <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
-                            <th style="width: 20%;" onclick="sortTable(1)" class="sortable">
+                            <th style="width: 12%;" onclick="sortTable(1)" class="sortable">
                                 Employee ID <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
-                            <th style="width: 30%;" onclick="sortTable(2)" class="sortable">
+                            <th style="width: 38%;" onclick="sortTable(2)" class="sortable">
                                 Employee Name <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
-                            <th style="width: 15%;" onclick="sortTable(3)" class="sortable">
+                            <th style="width: 12%;" onclick="sortTable(3)" class="sortable">
                                 Status <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
-                            <th style="width: 20%;" onclick="sortTable(4)" class="sortable">
-                                Amount <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
+                            <th style="width: 15%;" onclick="sortTable(4)" class="sortable">
+                                Amount (RS) <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
                             <th class="text-center" style="width: 240px;">Action</th>
                         </tr>
@@ -170,7 +176,7 @@
                                 <span th:if="${p.registered}" class="badge bg-success text-white" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px;">Registered</span>
                                 <span th:if="${p.registered == false}" class="badge bg-warning text-dark" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px; cursor: help;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Employee registration is required to view and generate payslips">Not Registered</span>
                             </td>
-                            <td class="fw-bold amount-cell" th:text="'₹' + ${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td class="fw-bold amount-cell" th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}"></td>
                             <td class="text-center text-nowrap">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <button class="btn btn-solid-primary btn-action-small me-1" th:onclick="'openSalaryModal(' + ${p.id} + ')'">View Structure</button>
@@ -180,14 +186,16 @@
                                             th:onclick="'window.open(\'/contractor/payslip/' + ${p.id} + '\', \'_blank\')'">View Slip</button>
                                             
                                     <a th:if="${p.registered == false}" class="btn btn-warning btn-action-small text-dark text-decoration-none" 
-                                       th:href="@{/contractor/add-employee(empCode=${p.empCode}, name=${p.name})}"
+                                       th:href="@{/contractor/add-employee(empCode=${p.empCode}, name=${p.name}, source='payments')}"
                                        style="font-weight: 600; padding-top: 4px; padding-bottom: 4px;">Add Employee</a>
                                 </div>
                             </td>
+                            <!-- Hidden column to store the monthYear for filtering -->
+                            <td class="d-none month-data-cell" th:text="${p.monthYear}"></td>
                         </tr>
                         <tr th:if="${payments == null || payments.empty}" id="noDataRow" class="no-data-row">
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                No Matching Records Found
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                Please select a month to view payments data.
                             </td>
                         </tr>
                     </tbody>
@@ -257,17 +265,37 @@
                     };
                     allData.push(rowData);
                 });
-                filteredData = [...allData];
-                renderTable();
+                
+                // Apply filter on load to hide rows since no month is selected
+                filterTableGlobal();
             }
         });
 
         function filterTableGlobal() {
             const searchTerm = document.getElementById('globalSearchInput').value.toLowerCase();
+            const selectedMonthYear = document.getElementById('monthYearFilter').value;
+            
+            if (!selectedMonthYear) {
+                filteredData = [];
+                currentPage = 1;
+                renderTable();
+                return;
+            }
             
             filteredData = allData.filter(row => {
-                if (!searchTerm) return true;
-                return row.cells.some(cellVal => cellVal.toLowerCase().includes(searchTerm));
+                let matchesSearch = true;
+                let matchesMonth = true;
+
+                if (searchTerm) {
+                    matchesSearch = row.cells.some(cellVal => cellVal.toLowerCase().includes(searchTerm));
+                }
+                if (selectedMonthYear) {
+                    // The hidden month cell is at index 6
+                    const monthVal = row.cells[6] ? row.cells[6].toUpperCase() : "";
+                    matchesMonth = monthVal.includes(selectedMonthYear);
+                }
+
+                return matchesSearch && matchesMonth;
             });
 
             currentPage = 1;
@@ -320,13 +348,27 @@
 
             allData.forEach(row => row.element.style.display = 'none');
 
-            pageData.forEach(row => {
+            pageData.forEach((row, index) => {
                 row.element.style.display = '';
+                
+                // Assign sequential SR NO based on page and index
+                const srNoTd = row.element.querySelector('td:first-child');
+                if (srNoTd) {
+                    srNoTd.innerText = startIndex + index + 1;
+                }
+                
                 tableBody.appendChild(row.element); 
             });
 
             const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
             const pageDisplay = document.getElementById('pageDisplay');
+            
+            // Handle pagination visibility based on selected month and year
+            const paginationControls = document.getElementById('paginationControls');
+            if (paginationControls) {
+                paginationControls.style.display = (!document.getElementById('monthYearFilter').value) ? 'none' : 'flex';
+            }
+            
             if (pageDisplay) {
                 pageDisplay.innerText = `${currentPage} / ${totalPages}`;
                 
@@ -337,14 +379,17 @@
             }
 
             let noDataRow = document.getElementById('noDataRow');
+            const isFilterSelected = document.getElementById('monthFilter').value !== "" && document.getElementById('yearFilter').value !== "";
+            const msg = isFilterSelected ? "No Matching Records Found" : "Please select both a month and year to view payments data.";
+            
             if (!noDataRow && filteredData.length === 0) {
                 noDataRow = document.createElement('tr');
                 noDataRow.id = 'noDataRow';
                 noDataRow.className = 'no-data-row';
-                noDataRow.innerHTML = '<td colspan="5" class="text-center py-5 text-muted">No Matching Records Found</td>';
+                noDataRow.innerHTML = `<td colspan="7" class="text-center py-5 text-muted">${msg}</td>`;
                 tableBody.appendChild(noDataRow);
-            }
-            if (noDataRow) {
+            } else if (noDataRow) {
+                noDataRow.querySelector('td').innerText = msg;
                 noDataRow.style.display = filteredData.length === 0 ? '' : 'none';
             }
         }
