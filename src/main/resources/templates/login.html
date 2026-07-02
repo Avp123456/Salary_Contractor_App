@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
@@ -117,12 +117,12 @@ body {
   background: #f8f9fa;
   transition: all 0.25s ease;
 }
-/* 🔥 HOVER (only slight size increase) */
+/* ðŸ”¥ HOVER (only slight size increase) */
 .role-card:hover {
   transform: scale(1.02); /* very subtle */
 }
 
-/* ✅ SELECTED (no animation, no extra effects) */
+/* âœ… SELECTED (no animation, no extra effects) */
 input[type="radio"]:checked + .role-card {
   background: #39d98a;
   border-color: #ced4da; /* same border */
@@ -151,6 +151,7 @@ input[type="radio"]:checked + .role-card {
 .toast-error { background: #dc3545; color: white; }
 
 </style>
+<link href="/css/global-theme.css" rel="stylesheet">
 </head>
 
 <body>
@@ -215,7 +216,7 @@ function googleLogin() {
     window.location.href = "/oauth2/authorization/google";
 }
 
-/* 🔥 TOGGLE PASSWORD VISIBILITY */
+/* ðŸ”¥ TOGGLE PASSWORD VISIBILITY */
 const togglePassword = document.querySelector('#togglePassword');
 const passwordField = document.querySelector('#password');
 
@@ -226,7 +227,7 @@ togglePassword.addEventListener('click', function (e) {
     this.classList.toggle('bi-eye-slash');
 });
 
-/* 🔥 AUTO HIDE TOAST */
+/* ðŸ”¥ AUTO HIDE TOAST */
 setTimeout(() => {
   const toast = document.querySelector(".toast-message");
   if (toast) {
@@ -240,3 +241,4 @@ setTimeout(() => {
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
+

@@ -2,6 +2,7 @@ package com.project.entity;
 
 import javax.persistence.*;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "report_configurations")
@@ -17,6 +18,13 @@ public class ReportConfiguration {
     private Integer trailerCount;
     private Integer totalPayableColumn;
     private Integer overtimeTotalAmountColumn;
+    private LocalDateTime lastUpdated;
+
+    @PrePersist
+    @PreUpdate
+    public void onUpdate() {
+        this.lastUpdated = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -72,5 +80,13 @@ public class ReportConfiguration {
 
     public void setOvertimeTotalAmountColumn(Integer overtimeTotalAmountColumn) {
         this.overtimeTotalAmountColumn = overtimeTotalAmountColumn;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

@@ -3,18 +3,25 @@
     <title>Payments Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .container { max-width: 96%; margin-top: 50px; padding: 0 15px; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; padding: 15px; margin-bottom: 20px; overflow-x: auto; }
-        .table thead { background-color: #f1f5f9; }
-        .table th { font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: #64748b; padding: 16px; border-bottom: 1px solid #e2e8f0; }
-        .table td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #f1f5f9; }
+        .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06); background: white; margin-bottom: 20px; overflow-x: auto; overflow: hidden; }
+        .table thead tr, .table thead th { background-color: #dbeafe !important; color: #1e3a5f !important; }
+        .table th { font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 0.05em; padding: 0.4rem 10px; border: none; cursor: pointer; user-select: none; transition: background-color 0.2s; white-space: nowrap; }
+        .table th:hover { background-color: #bfdbfe !important; }
+        .table tbody tr { height: 35px; }
+        .table td { padding: 1px 10px; font-size: 15px; height: 17px; line-height: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .table tbody tr:hover td { background-color: #eff6ff !important; color: #1e3a5f; }
         .badge-pending { background-color: #fef3c7; color: #92400e; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; }
-        .btn-pay { background-color: #10b981; color: white; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: none; font-size: 0.8rem; }
-        .btn-view { background-color: #f1f5f9; color: #475569; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: none; font-size: 0.8rem; margin-right: 5px; }
-        .btn-view:hover { background-color: #e2e8f0; }
+        .btn-action-small { padding: 3px 8px !important; font-size: 13px !important; line-height: 1.2; }
+        .btn-solid-primary { background-color: #dcfce7; color: #166534; border: none; font-weight: 600; }
+        .btn-solid-primary:hover { background-color: #bbf7d0; color: #166534; }
+        .btn-solid-dark { background-color: #e0f2fe; color: #0369a1; border: none; font-weight: 600; }
+        .btn-solid-dark:hover:not(:disabled) { background-color: #bae6fd; color: #0369a1; }
+        .btn-solid-dark:disabled { opacity: 0.5; cursor: not-allowed; }
         
         /* Modal Styling */
         .modal-content { border-radius: 16px; border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
@@ -47,18 +54,29 @@
         .filter-row th { padding: 8px 16px; border-bottom: 1px solid #dbeafe; cursor: default !important; }
         .filter-row th:hover { background-color: #eff6ff !important; }
         
-        .search-wrapper { position: relative; display: flex; align-items: center; }
-        .column-filter { 
-            width: 100%; 
-            padding: 6px 30px 6px 10px; 
-            border-radius: 6px; 
-            border: 1px solid #d1d5db; 
-            font-size: 0.75rem; 
-            font-weight: 400;
-            background-color: white;
-            color: #1e293b;
+        .search-wrapper-global { position: relative; flex-grow: 1; max-width: 350px; }
+        .search-wrapper-global .bi-search {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 0.9rem;
         }
-        .column-filter:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        #globalSearchInput {
+            padding-left: 2.2rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            height: 38px;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #globalSearchInput:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            outline: none;
+        }
         
         /* Pagination Styles */
         .pagination-container { 
@@ -109,7 +127,15 @@
 
     <div th:replace="~{fragments/navbar :: navbar('Payments')}"></div>
 
-    <div class="container">
+    <div class="container" style="margin-top: 20px;">
+        <!-- Toolbar section for Global Search -->
+        <div class="d-flex justify-content-end mb-3">
+            <div class="search-wrapper-global" style="width: 350px;">
+                <i class="bi bi-search"></i>
+                <input type="text" id="globalSearchInput" class="form-control" placeholder="Search by Employee ID, Name or Amount..." oninput="filterTableGlobal()">
+            </div>
+        </div>
+
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -124,29 +150,13 @@
                             <th style="width: 30%;" onclick="sortTable(2)" class="sortable">
                                 Employee Name <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
-                            <th style="width: 20%;" onclick="sortTable(3)" class="sortable">
+                            <th style="width: 15%;" onclick="sortTable(3)" class="sortable">
+                                Status <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
+                            </th>
+                            <th style="width: 20%;" onclick="sortTable(4)" class="sortable">
                                 Amount <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
                             </th>
                             <th class="text-center" style="width: 240px;">Action</th>
-                        </tr>
-                        <tr class="filter-row">
-                            <th></th>
-                            <th>
-                                <div class="search-wrapper">
-                                    <input type="text" class="column-filter" placeholder="Search..." onkeyup="filterTable()">
-                                </div>
-                            </th>
-                            <th>
-                                <div class="search-wrapper">
-                                    <input type="text" class="column-filter" placeholder="Search..." onkeyup="filterTable()">
-                                </div>
-                            </th>
-                            <th>
-                                <div class="search-wrapper">
-                                    <input type="text" class="column-filter" placeholder="Search..." onkeyup="filterTable()">
-                                </div>
-                            </th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -155,15 +165,17 @@
                             <td th:text="${p.empCode}"></td>
                             <td>
                                 <span th:text="${p.name}"></span>
-                                <span th:if="${p.registered == false}" class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Not Registered</span>
+                            </td>
+                            <td>
+                                <span th:if="${p.registered}" class="badge bg-success text-white" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px;">Registered</span>
+                                <span th:if="${p.registered == false}" class="badge bg-warning text-dark" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px;">Not Registered</span>
                             </td>
                             <td class="fw-bold amount-cell" th:text="'₹' + ${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}"></td>
                             <td class="text-center text-nowrap">
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <button class="btn btn-view btn-sm px-3 m-0" style="font-size: 13px;" th:onclick="'openSalaryModal(' + ${p.id} + ')'">View Structure</button>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <button class="btn btn-solid-primary btn-action-small me-1" th:onclick="'openSalaryModal(' + ${p.id} + ')'">View Structure</button>
                                     
-                                    <button class="btn btn-primary btn-sm px-3 m-0" 
-                                            style="background-color: #0f172a; border: none; font-size: 13px;"
+                                    <button class="btn btn-solid-dark btn-action-small" 
                                             th:data-id="${p.id}"
                                             th:onclick="'window.open(\'/contractor/payslip/' + ${p.id} + '\', \'_blank\')'"
                                             th:disabled="${p.registered == false}">View Slip</button>
@@ -171,7 +183,7 @@
                             </td>
                         </tr>
                         <tr th:if="${payments == null || payments.empty}" id="noDataRow" class="no-data-row">
-                            <td colspan="5" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 No Matching Records Found
                             </td>
                         </tr>
@@ -247,16 +259,12 @@
             }
         });
 
-        function filterTable() {
-            const filters = Array.from(document.querySelectorAll('.column-filter')).map(i => i.value.toLowerCase());
+        function filterTableGlobal() {
+            const searchTerm = document.getElementById('globalSearchInput').value.toLowerCase();
             
             filteredData = allData.filter(row => {
-                // filters correspond to col indexes 1, 2, 3
-                return filters.every((filter, index) => {
-                    if (!filter) return true;
-                    const cellVal = row.cells[index + 1].toLowerCase();
-                    return cellVal.includes(filter);
-                });
+                if (!searchTerm) return true;
+                return row.cells.some(cellVal => cellVal.toLowerCase().includes(searchTerm));
             });
 
             currentPage = 1;

@@ -10,10 +10,12 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .container { max-width: 1200px; margin-top: 30px; }
         h2 { font-size: 1.5rem; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; padding: 15px 20px; margin-bottom: 20px; }
-        .table th { font-weight: 700; text-transform: uppercase; font-size: 0.62rem; letter-spacing: 0.08em; color: #475569; padding: 12px 8px; border-bottom: 2px solid #f1f5f9; background-color: #f8fafc; }
-        .table td { padding: 4px 8px; vertical-align: middle; font-size: 0.72rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
-        .table tbody tr:hover { background-color: #fcfdfe; }
+        .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06); background: white; margin-bottom: 20px; overflow-x: auto; overflow: hidden; }
+        .table thead tr, .table thead th { background-color: #dbeafe !important; color: #1e3a5f !important; }
+        .table th { font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 0.05em; padding: 0.4rem 10px; border: none; }
+        .table tbody tr { height: 35px; }
+        .table td { padding: 1px 10px; font-size: 15px; height: 17px; line-height: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .table tbody tr:hover td { background-color: #eff6ff !important; color: #1e3a5f; }
         .btn-primary { background-color: #2563eb; border: none; font-weight: 600; font-size: 0.8rem; padding: 6px 16px; border-radius: 8px; }
         .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-1px); transition: all 0.2s; }
         .config-row { background-color: #f8fafc; padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
@@ -70,17 +72,19 @@
                 <table class="table" id="configTable">
                     <thead>
                         <tr>
-                            <th>Configuration Name</th>
-                            <th>Header/Trailer Skip</th>
-                            <th>Payable Col Pos</th>
+                            <th>Configuration</th>
+                            <th>File(s)</th>
+                            <th>Mappings</th>
+                            <th>Last updated</th>
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody id="configTableBody">
                         <tr th:each="config : ${configurations}" class="config-row-item">
                             <td th:text="${config.configName}" class="fw-medium"></td>
-                            <td th:text="${config.headerCount + ' / ' + config.trailerCount}"></td>
-                            <td th:text="${config.totalPayableColumn}"></td>
+                            <td th:text="${config.filesCount}"></td>
+                            <td th:text="${config.mappingsCount}"></td>
+                            <td th:text="${config.lastUpdated != null ? #temporals.format(config.lastUpdated, 'dd MMM yyyy, hh:mm a') : 'N/A'}"></td>
                             <td class="text-center">
                                 <button class="btn btn-outline-info btn-sm px-3 me-1" th:onclick="'previewConfig(' + ${config.id} + ')'">Preview</button>
                                 <button class="btn btn-outline-primary btn-sm px-3 me-1" th:onclick="'showEditModal(' + ${config.id} + ')'">Edit</button>
@@ -88,7 +92,7 @@
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(configurations)}" id="noConfigRow">
-                            <td colspan="4" class="text-center py-4 text-muted">No saved configurations found.</td>
+                            <td colspan="5" class="text-center py-4 text-muted">No saved configurations found.</td>
                         </tr>
                     </tbody>
                 </table>

@@ -5,78 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Salary Data</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .container { max-width: 1400px; margin-top: 50px; }
+        .container { max-width: 1400px; margin-top: 20px; }
         .header-section { margin-bottom: 30px; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; overflow: hidden; }
-        .table thead { background-color: #dbeafe; }
+        .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06); background: white; overflow: hidden; }
+        .table thead tr, .table thead th { background-color: #dbeafe !important; color: #1e3a5f !important; }
         .table th { 
             font-weight: 600; 
             text-transform: uppercase; 
-            font-size: 0.7rem; 
+            font-size: 13px; 
             letter-spacing: 0.05em; 
-            color: #1e40af; 
-            padding: 14px 16px; 
-            border-bottom: 2px solid #bfdbfe; 
+            padding: 0.4rem 10px; 
+            border: none; 
             white-space: nowrap;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        .table th.sortable:hover { background-color: #bfdbfe; }
+        .table th.sortable:hover { background-color: #bfdbfe !important; }
         
+        .table tbody tr { height: 35px; }
         .table td { 
-            padding: 8px 12px; 
-            font-size: 0.75rem; 
-            border-bottom: 1px solid #f1f5f9;
+            padding: 1px 10px; 
+            font-size: 15px; 
+            height: 17px; 
+            line-height: 15px;
+            border-bottom: 1px solid #f0f0f0;
             max-width: 150px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
             transition: background-color 0.2s;
+            vertical-align: middle;
         }
-        .table td:hover { background-color: #f8fafc; color: #2563eb; }
+        .table tbody tr:hover td { background-color: #eff6ff !important; color: #1e3a5f; }
         
         /* Sorting Icons */
         .sort-icon { margin-left: 5px; color: #cbd5e1; font-weight: normal; }
         .sort-asc .sort-icon-up, .sort-desc .sort-icon-down { color: #3b82f6; font-weight: bold; }
         
-        /* Filter Styles */
-        .filter-row { background-color: #eff6ff; }
-        .filter-row th { padding: 8px 16px; border-bottom: 1px solid #dbeafe; cursor: default !important; }
-        .filter-row th:hover { background-color: #eff6ff !important; }
-        
-        .search-wrapper { position: relative; display: flex; align-items: center; }
-        .column-filter { 
-            width: 100%; 
-            padding: 6px 30px 6px 10px; 
-            border-radius: 6px; 
-            border: 1px solid #d1d5db; 
-            font-size: 0.75rem; 
-            font-weight: 400;
-            background-color: white;
-            color: #1e293b;
+        .search-wrapper-global { position: relative; flex-grow: 1; max-width: 350px; }
+        .search-wrapper-global .bi-search {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 0.9rem;
         }
-        .column-filter:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .search-btn { 
-            position: absolute; 
-            right: 8px; 
-            background: none; 
-            border: none; 
-            padding: 0; 
-            color: #94a3b8; 
-            cursor: pointer;
-            display: flex;
-            align-items: center;
+        #globalSearchInput {
+            padding-left: 2.2rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            height: 38px;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .search-btn:hover { color: #3b82f6; }
+        #globalSearchInput:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            outline: none;
+        }
 
         .btn-show { background-color: #2563eb; color: white; font-weight: 600; padding: 8px 20px; border-radius: 8px; transition: all 0.2s; border: none; }
-        .btn-show:hover { background-color: #1d4ed8; color: white; transform: translateY(-1px); }
-        .filter-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .form-select { border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; font-size: 0.9rem; }
+        .btn-show:hover:not(:disabled) { background-color: #1d4ed8; color: white; transform: translateY(-1px); }
+        .btn-show:disabled { opacity: 0.6; cursor: not-allowed; }
+        .filter-section { background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-select { border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem; }
         .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); }
 
         /* Pagination Styles */
@@ -126,19 +125,24 @@
             </div>
 
             <div class="filter-section">
-                <form id="salaryForm" action="/contractor/show-salary-data" method="get" class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Select Configuration Name</label>
-                        <select id="configIdSelect" name="configId" class="form-select" required>
-                            <option value="" disabled th:selected="${selectedConfigId == null}">Choose a configuration...</option>
+                <form id="salaryForm" action="/contractor/show-salary-data" method="get" class="d-flex align-items-center justify-content-end gap-3 w-100">
+                    <div class="search-wrapper-global" style="width: 350px;">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="globalSearchInput" class="form-control" placeholder="Search by Employee ID, Name or Email..." oninput="filterTableGlobal()">
+                    </div>
+                    
+                    <div style="width: 320px;">
+                        <select id="configIdSelect" name="configId" class="form-select" required style="height: 38px;">
+                            <option value="" th:selected="${selectedConfigId == null}">Choose a configuration...</option>
                             <option th:each="c : ${configurations}" 
                                     th:value="${c.id}" 
                                     th:text="${c.configName}"
                                     th:selected="${c.id == selectedConfigId}"></option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <button type="button" onclick="handleShowData()" class="btn btn-show w-100">Show Data</button>
+                    
+                    <div>
+                        <button type="button" onclick="handleShowData()" id="showDataBtn" class="btn btn-show px-4" style="height: 38px;" th:disabled="${selectedConfigId == null}">Show Data</button>
                     </div>
                 </form>
             </div>
@@ -155,17 +159,6 @@
                             <th th:each="col, stat : ${columns}" th:onclick="'sortTable(' + ${stat.count} + ')'" class="sortable">
                                 <span th:text="${col.columnName}"></span> 
                                 <span class="sort-icon"><span class="sort-icon-up">↑</span><span class="sort-icon-down">↓</span></span>
-                            </th>
-                        </tr>
-                        <tr class="filter-row">
-                            <th></th>
-                            <th th:each="col, stat : ${columns}">
-                                <div class="search-wrapper">
-                                    <input type="text" class="column-filter" th:placeholder="'Search...'" th:onkeyup="'filterTable()'">
-                                    <button class="search-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    </button>
-                                </div>
                             </th>
                         </tr>
                     </thead>
@@ -185,8 +178,11 @@
                 </table>
             </div>
             
-            <!-- Pagination -->
-            <div class="pagination-container" th:if="${!rows.empty}">
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-3 mb-4" th:if="${rows != null}">
+            <div class="pagination-container border-0 bg-transparent" th:if="${!rows.empty}">
                 <button class="pagination-btn" onclick="goToPage(1)" id="firstPageBtn" title="First Page">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/></svg>
                 </button>
@@ -260,6 +256,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            const configSelect = document.getElementById('configIdSelect');
+            const showDataBtn = document.getElementById('showDataBtn');
+            if (configSelect && showDataBtn) {
+                configSelect.addEventListener('change', function() {
+                    showDataBtn.disabled = !this.value;
+                });
+            }
+            
             const tableRows = document.querySelectorAll('.data-row');
             if (tableRows.length > 0) {
                 // Initialize data from DOM
@@ -292,16 +296,13 @@
             });
         }
 
-        function filterTable() {
-            const filters = Array.from(document.querySelectorAll('.column-filter')).map(i => i.value.toLowerCase());
+        function filterTableGlobal() {
+            const searchTerm = document.getElementById('globalSearchInput').value.toLowerCase();
             
             filteredData = allData.filter(row => {
-                // row.cells[0] is SR NO, search boxes start from column 1
-                return filters.every((filter, index) => {
-                    if (!filter) return true;
-                    const cellVal = row.cells[index + 1].toLowerCase();
-                    return cellVal.includes(filter);
-                });
+                if (!searchTerm) return true;
+                // Check if any cell in the row contains the search term
+                return row.cells.some(cellVal => cellVal.toLowerCase().includes(searchTerm));
             });
 
             currentPage = 1;

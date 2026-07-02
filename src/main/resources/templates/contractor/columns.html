@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -60,6 +60,7 @@
         .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
         .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
+<link href="/css/global-theme.css" rel="stylesheet">
 </head>
 <body>
     <div th:replace="~{fragments/navbar :: navbar('Files')}"></div>
@@ -537,3 +538,4 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
+

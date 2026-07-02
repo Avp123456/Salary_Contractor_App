@@ -18,40 +18,44 @@
         }
         .header-section {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
-            margin-bottom: 20px;
-        }
-        h2 {
-            font-size: 1.5rem;
+            margin-top: 20px;
+            margin-bottom: 15px;
         }
         .card {
-            border: none;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
             overflow: hidden;
         }
         .table {
             margin-bottom: 0;
         }
-        .table thead {
-            background-color: #f1f5f9;
+        .table thead tr,
+        .table thead th {
+            background-color: #dbeafe !important;
+            color: #1e3a5f !important;
         }
         .table th {
             font-weight: 600;
+            font-size: 13px;
             text-transform: uppercase;
-            font-size: 0.7rem;
             letter-spacing: 0.05em;
-            color: #64748b;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 0.4rem 10px;
+            border: none;
         }
         .table td {
-            padding: 10px 16px;
+            padding: 3px 16px;
             vertical-align: middle;
             color: #334155;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.85rem;
+            font-size: 15px;
+            height: 20px;
+            white-space: nowrap;
+        }
+        .table tbody tr:hover td {
+            background-color: #eff6ff;
         }
         .btn-upload {
             background-color: #2563eb;
@@ -132,6 +136,7 @@
         .pagination-btn:hover:not(:disabled) { color: #3b82f6; }
         .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
+<link href="/css/global-theme.css" rel="stylesheet">
 </head>
 <body>
     <div th:replace="~{fragments/navbar :: navbar('Files')}"></div>
@@ -147,8 +152,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div class="header-section" style="margin-top: -10px;">
-            <h2 class="fw-bold">Files</h2>
+        <div class="header-section">
             <button class="btn btn-upload" data-bs-toggle="modal" data-bs-target="#uploadModal">
                 + Upload New File
             </button>
@@ -168,7 +172,7 @@
                 <tbody>
                     <tr th:each="f : ${files}">
                         <td class="fw-medium py-2">
-                            <span th:text="${f.fileName}" style="font-size: 0.9rem;"></span>
+                            <span th:text="${f.fileName}"></span>
                             <span th:if="${f.filePath == null}" class="badge bg-warning text-dark ms-2" style="font-size: 0.6rem;">Old (Re-upload)</span>
                         </td>
                         <td class="text-nowrap" th:text="${#numbers.formatDecimal(f.size / 1024.0 / 1024.0, 1, 2) + ' MB'}"></td>
@@ -186,11 +190,11 @@
                 </tbody>
             </table>
             </div>
+        </div>
 
-            <!-- Pagination Controls -->
-            <div class="d-flex justify-content-center mt-3 mb-4">
-                <div class="pagination-container" id="paginationControls">
-                </div>
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-center mt-3 mb-4">
+            <div class="pagination-container" id="paginationControls">
             </div>
         </div>
     </div>

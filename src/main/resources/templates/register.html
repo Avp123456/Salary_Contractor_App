@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
@@ -121,6 +121,7 @@ body {
 }
 
 </style>
+<link href="/css/global-theme.css" rel="stylesheet">
 </head>
 
 <body>
@@ -173,7 +174,7 @@ body {
 </div>
 
 <script>
-/* 🔥 TOGGLE PASSWORD VISIBILITY */
+/* ðŸ”¥ TOGGLE PASSWORD VISIBILITY */
 function setupPasswordToggle(toggleId, inputId) {
     const toggle = document.querySelector(toggleId);
     const input = document.querySelector(inputId);
@@ -188,7 +189,7 @@ function setupPasswordToggle(toggleId, inputId) {
 setupPasswordToggle('#togglePassword', '#password');
 setupPasswordToggle('#toggleConfirmPassword', '#confirmPassword');
 
-/* 🔥 PASSWORD MATCH VALIDATION */
+/* ðŸ”¥ PASSWORD MATCH VALIDATION */
 document.getElementById("registerForm").addEventListener("submit", function(e) {
   const password = document.getElementById("password").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
@@ -207,3 +208,4 @@ document.getElementById("registerForm").addEventListener("submit", function(e) {
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>
+

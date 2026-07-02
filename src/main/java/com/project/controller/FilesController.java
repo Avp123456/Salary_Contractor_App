@@ -507,7 +507,21 @@ System.out.println("[INFO] Report Page Visited "+getTime());
     public String configurations(Model model, HttpSession session) {
         System.out.println("[Page Visited]:- Contractor Configuration");
         Long contractorId = getCurrentContractorId(session);
-        model.addAttribute("configurations", configRepo.findByContractorId(contractorId));
+        
+        List<ReportConfiguration> configs = configRepo.findByContractorId(contractorId);
+        List<Map<String, Object>> configList = new ArrayList<>();
+        
+        for (ReportConfiguration config : configs) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", config.getId());
+            map.put("configName", config.getConfigName());
+            map.put("lastUpdated", config.getLastUpdated());
+            map.put("filesCount", configFileRepo.findByConfigId(config.getId()).size());
+            map.put("mappingsCount", configColRepo.findByConfigId(config.getId()).size());
+            configList.add(map);
+        }
+        
+        model.addAttribute("configurations", configList);
         model.addAttribute("uploadedFiles", fileRepo.findByContractorId(contractorId));
         return "contractor/configuration";
     }
