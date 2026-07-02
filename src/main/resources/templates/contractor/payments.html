@@ -168,17 +168,20 @@
                             </td>
                             <td>
                                 <span th:if="${p.registered}" class="badge bg-success text-white" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px;">Registered</span>
-                                <span th:if="${p.registered == false}" class="badge bg-warning text-dark" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px;">Not Registered</span>
+                                <span th:if="${p.registered == false}" class="badge bg-warning text-dark" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em; padding: 5px 10px; border-radius: 6px; cursor: help;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Employee registration is required to view and generate payslips">Not Registered</span>
                             </td>
                             <td class="fw-bold amount-cell" th:text="'₹' + ${#numbers.formatDecimal(p.amount, 1, 'COMMA', 2, 'POINT')}"></td>
                             <td class="text-center text-nowrap">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <button class="btn btn-solid-primary btn-action-small me-1" th:onclick="'openSalaryModal(' + ${p.id} + ')'">View Structure</button>
                                     
-                                    <button class="btn btn-solid-dark btn-action-small" 
+                                    <button th:if="${p.registered}" class="btn btn-solid-dark btn-action-small" 
                                             th:data-id="${p.id}"
-                                            th:onclick="'window.open(\'/contractor/payslip/' + ${p.id} + '\', \'_blank\')'"
-                                            th:disabled="${p.registered == false}">View Slip</button>
+                                            th:onclick="'window.open(\'/contractor/payslip/' + ${p.id} + '\', \'_blank\')'">View Slip</button>
+                                            
+                                    <a th:if="${p.registered == false}" class="btn btn-warning btn-action-small text-dark text-decoration-none" 
+                                       th:href="@{/contractor/add-employee(empCode=${p.empCode}, name=${p.name})}"
+                                       style="font-weight: 600; padding-top: 4px; padding-bottom: 4px;">Add Employee</a>
                                 </div>
                             </td>
                         </tr>
@@ -512,6 +515,14 @@
             }
         }
 
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
     </script>
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

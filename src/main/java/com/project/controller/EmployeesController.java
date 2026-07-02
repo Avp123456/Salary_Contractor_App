@@ -41,9 +41,14 @@ public class EmployeesController {
     }
 
     @GetMapping("/contractor/add-employee")
-    public String addEmployeePage(Model model) {
+    public String addEmployeePage(@org.springframework.web.bind.annotation.RequestParam(required = false) String empCode,
+                                  @org.springframework.web.bind.annotation.RequestParam(required = false) String name,
+                                  Model model) {
         System.out.println("[Page Visited]:- Add Employee");
-        model.addAttribute("employee", new Employee());
+        Employee emp = new Employee();
+        if (empCode != null) emp.setEmpCode(empCode);
+        if (name != null) emp.setName(name);
+        model.addAttribute("employee", emp);
         System.out.println("[ACTION] Add Employee button Clicked "+getTime());
 
         return "contractor/add-employee";
